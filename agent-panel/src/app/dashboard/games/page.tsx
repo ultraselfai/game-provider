@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const API_BASE = 'http://localhost:3006/api/v1';
+import { AGENT_API } from '@/lib/config';
 
 interface Agent {
   id: string;
@@ -64,7 +63,7 @@ export default function GamesPage() {
 
   async function fetchGames(token: string) {
     try {
-      const res = await fetch(`${API_BASE}/agent/games`, {
+      const res = await fetch(`${AGENT_API}/games`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

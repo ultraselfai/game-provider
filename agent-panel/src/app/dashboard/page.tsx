@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const API_BASE = 'http://localhost:3006/api/v1';
+import { AGENT_API } from '@/lib/config';
 
 interface Agent {
   id: string;
@@ -52,10 +51,10 @@ export default function DashboardPage() {
     try {
       // Fetch agent profile and transactions
       const [profileRes, transactionsRes] = await Promise.all([
-        fetch(`${API_BASE}/agent/profile`, {
+        fetch(`${AGENT_API}/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${API_BASE}/agent/transactions`, {
+        fetch(`${AGENT_API}/transactions`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

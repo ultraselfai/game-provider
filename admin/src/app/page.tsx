@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API_BASE, ADMIN_KEY } from '@/lib/config';
 
 interface Stats {
   agents: number;
@@ -20,9 +21,6 @@ interface Agent {
   balance: number;
   isActive: boolean;
 }
-
-const API_BASE = 'http://localhost:3006/api/v1';
-const ADMIN_KEY = 'dev-admin-key';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({

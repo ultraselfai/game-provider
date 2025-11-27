@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AGENT_API } from '@/lib/config';
 
-const API_BASE = 'http://localhost:3006/api/v1';
+// Helper function to set cookie
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +24,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/agent/login`, {
+      const res = await fetch(`${AGENT_API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -27,7 +33,8 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success && data.data?.token) {
-        // Salva token e dados do agente no localStorage
+        // Salva token em cookie (para proxy) e localStorage
+        setCookie('agent_token', data.data.token, 7);
         localStorage.setItem('agentToken', data.data.token);
         localStorage.setItem('agentData', JSON.stringify(data.data.agent));
         router.push('/dashboard');

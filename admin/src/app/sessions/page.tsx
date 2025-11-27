@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ADMIN_API } from '@/lib/config';
 
 interface Session {
   id: string;
@@ -16,8 +17,6 @@ interface Session {
   };
 }
 
-const API_BASE = 'http://localhost:3006/api/v1/admin';
-
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +28,7 @@ export default function SessionsPage() {
 
   async function fetchSessions() {
     try {
-      const res = await fetch(`${API_BASE}/sessions`);
+      const res = await fetch(`${ADMIN_API}/sessions`);
       const data = await res.json();
       
       if (data.data) {

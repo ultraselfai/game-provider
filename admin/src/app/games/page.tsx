@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ADMIN_API } from '@/lib/config';
 
 interface GameSettings {
   id: string;
@@ -24,8 +25,6 @@ interface GameSettings {
   createdAt: string;
   updatedAt: string;
 }
-
-const API_BASE = 'http://localhost:3006/api/v1/admin';
 
 // Game icons mapping
 const gameIcons: Record<string, string> = {
@@ -58,7 +57,7 @@ export default function GamesPage() {
   async function fetchGames() {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/games`);
+      const res = await fetch(`${ADMIN_API}/games`);
       if (res.ok) {
         const data = await res.json();
         setGames(Array.isArray(data) ? data : []);
@@ -76,7 +75,7 @@ export default function GamesPage() {
   async function saveGameSettings(gameCode: string, updates: Partial<GameSettings>) {
     try {
       setSaving(true);
-      const res = await fetch(`${API_BASE}/games/${gameCode}`, {
+      const res = await fetch(`${ADMIN_API}/games/${gameCode}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { AGENT_API, ADMIN_KEY } from '@/lib/config';
 
 interface Operator {
   id: string;
@@ -11,9 +12,6 @@ interface Operator {
   webhookUrl: string | null;
   createdAt: string;
 }
-
-const API_BASE = 'http://localhost:3006/api/v1/agent';
-const ADMIN_KEY = 'dev-admin-key';
 
 export default function OperatorsPage() {
   const [operators, setOperators] = useState<Operator[]>([]);
@@ -27,7 +25,7 @@ export default function OperatorsPage() {
 
   async function fetchOperators() {
     try {
-      const res = await fetch(`${API_BASE}/operators`, {
+      const res = await fetch(`${AGENT_API}/operators`, {
         headers: { 'x-admin-key': ADMIN_KEY },
       });
       const data = await res.json();
@@ -189,7 +187,7 @@ function CreateOperatorModal({
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/operators`, {
+      const res = await fetch(`${AGENT_API}/operators`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

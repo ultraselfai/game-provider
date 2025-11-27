@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ADMIN_API } from '@/lib/config';
 
 interface Transaction {
   id: string;
@@ -14,8 +15,6 @@ interface Transaction {
   createdAt: string;
 }
 
-const API_BASE = 'http://localhost:3006/api/v1/admin';
-
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +26,7 @@ export default function TransactionsPage() {
 
   async function fetchTransactions() {
     try {
-      const res = await fetch(`${API_BASE}/transactions`);
+      const res = await fetch(`${ADMIN_API}/transactions`);
       const data = await res.json();
       
       if (data.data) {

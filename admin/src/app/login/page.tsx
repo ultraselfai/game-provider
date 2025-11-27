@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+// Helper function to set cookie
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,10 +26,16 @@ export default function LoginPage() {
     // Admin credentials (in production, validate against backend)
     // For now, using simple credentials
     if (email === 'admin@gameprovider.com' && password === 'admin123') {
-      // Store auth token
+      // Store auth token in cookie (accessible by proxy/middleware)
+      setCookie('admin_token', 'admin-authenticated', 7);
+      
+      // Also store in localStorage for client-side checks
       localStorage.setItem('admin_token', 'admin-authenticated');
       localStorage.setItem('admin_email', email);
-      router.push('/');
+      
+      // Redirect to original destination or home
+      const redirect = searchParams.get('redirect') || '/';
+      router.push(redirect);
     } else {
       setError('Credenciais inválidas');
     }

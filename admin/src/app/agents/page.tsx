@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { AGENT_API, ADMIN_API, ADMIN_KEY } from '@/lib/config';
 
 interface Agent {
   id: string;
@@ -47,10 +48,6 @@ interface AgentTransaction {
   createdAt: string;
 }
 
-const API_BASE = 'http://localhost:3006/api/v1/agent';
-const ADMIN_API = 'http://localhost:3006/api/v1/admin';
-const ADMIN_KEY = 'dev-admin-key';
-
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +60,7 @@ export default function AgentsPage() {
   const fetchAgents = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch(`${API_BASE}/agents`, {
+      const res = await fetch(`${AGENT_API}/agents`, {
         headers: { 'x-admin-key': ADMIN_KEY },
       });
       const data = await res.json();
@@ -348,7 +345,7 @@ function CreateAgentModal({
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/agents`, {
+      const res = await fetch(`${AGENT_API}/agents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -584,7 +581,7 @@ function CreditModal({
     const endpoint = operation === 'add' ? 'credits' : 'debit';
 
     try {
-      const res = await fetch(`${API_BASE}/agents/${agent.id}/${endpoint}`, {
+      const res = await fetch(`${AGENT_API}/agents/${agent.id}/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -773,7 +770,7 @@ function AgentDetailsModal({
 
   async function fetchTransactions() {
     try {
-      const res = await fetch(`${API_BASE}/agents/${agent.id}/transactions`, {
+      const res = await fetch(`${AGENT_API}/agents/${agent.id}/transactions`, {
         headers: { 'x-admin-key': ADMIN_KEY },
       });
       const data = await res.json();
@@ -981,7 +978,7 @@ function GamesModal({
       // Se "todos" está marcado, enviar array vazio (significa todos liberados)
       const gamesToSave = selectAll ? [] : selectedGames;
 
-      const res = await fetch(`${API_BASE}/agents/${agent.id}`, {
+      const res = await fetch(`${AGENT_API}/agents/${agent.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

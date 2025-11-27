@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE } from '@/lib/config';
 
 interface Agent {
   id: string;
@@ -43,7 +44,7 @@ export default function IntegrationPage() {
     setTimeout(() => setCopiedField(null), 2000);
   }
 
-  const API_BASE_URL = 'http://localhost:3006/api/v1';
+  const API_BASE_URL = API_BASE;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -278,7 +279,7 @@ Content-Type: application/json
   "success": true,
   "data": {
     "sessionToken": "sess_xxx...",
-    "gameUrl": "http://localhost:3006/play/fortunetiger?token=sess_xxx..."
+    "gameUrl": "${API_BASE_URL}/play/fortunetiger?token=sess_xxx..."
   }
 }
 
