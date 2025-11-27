@@ -8,8 +8,8 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci
+# Instalar TODAS as dependências (incluindo devDependencies para build)
+RUN npm ci --include=dev
 
 # Copiar código fonte
 COPY . .
@@ -33,9 +33,11 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
 # Copiar arquivos necessários do build
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+
+# Copiar public se existir (pode estar vazio)
+COPY --from=builder /app/public ./public
 
 # Ajustar permissões
 RUN chown -R nextjs:nodejs /app
