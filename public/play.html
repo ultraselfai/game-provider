@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Launcher - Dev</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 12px;
+            color: #aaa;
+        }
+        select, input {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #2a2a4a;
+            color: #fff;
+            font-size: 14px;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        .btn-secondary {
+            background: #444;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: #555;
+        }
+        .game-frame {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 10px;
+            background: #000;
+        }
+        .info-bar {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .info-bar span {
+            color: #ffd700;
+        }
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .status.connected { background: #2ecc71; color: #fff; }
+        .status.loading { background: #f39c12; color: #fff; }
+        .status.error { background: #e74c3c; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 Game Launcher</h1>
+        <p class="subtitle">Ambiente de Desenvolvimento - Token gerado automaticamente</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Jogo</label>
+                <select id="gameSelect">
+                    <option value="fortuneox">Fortune Ox</option>
+                    <option value="fortunetiger">Fortune Tiger</option>
+                    <option value="fortunerabbit">Fortune Rabbit</option>
+                    <option value="fortunemouse">Fortune Mouse</option>
+                    <option value="fortunepanda">Fortune Panda</option>
+                    <option value="bikiniparadise">Bikini Paradise</option>
+                    <option value="hoodvswoolf">Hood vs Woolf</option>
+                    <option value="jackfrost">Jack Frost</option>
+                    <option value="phoenixrises">Phoenix Rises</option>
+                    <option value="queenofbounty">Queen of Bounty</option>
+                    <option value="songkranparty">Songkran Party</option>
+                    <option value="treasuresofaztec">Treasures of Aztec</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>User ID (teste)</label>
+                <input type="text" id="userId" value="player123" style="width: 120px;">
+            </div>
+            <button class="btn btn-primary" onclick="launchGame()">🚀 Iniciar Jogo</button>
+            <button class="btn btn-secondary" onclick="refreshGame()">🔄 Recarregar (Novo Token)</button>
+            <button class="btn btn-secondary" onclick="openConfig()">⚙️ Admin Panel</button>
+        </div>
+        
+        <div class="info-bar">
+            <div>Token: <span id="currentToken">-</span></div>
+            <div>Game: <span id="currentGame">-</span></div>
+            <div>Status: <span id="status" class="status loading">Aguardando</span></div>
+        </div>
+        
+        <iframe id="gameFrame" class="game-frame" src="about:blank"></iframe>
+    </div>
+
+    <script>
+        let currentToken = null;
+        
+        async function launchGame() {
+            const game = document.getElementById('gameSelect').value;
+            const userId = document.getElementById('userId').value || 'player' + Date.now();
+            
+            document.getElementById('status').className = 'status loading';
+            document.getElementById('status').textContent = 'Gerando token...';
+            
+            try {
+                // Gera novo token
+                const response = await fetch(`/api/vgames/test/generate-token/${userId}/${game}`);
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    currentToken = data.token;
+                    
+                    // Atualiza info
+                    document.getElementById('currentToken').textContent = currentToken.substring(0, 30) + '...';
+                    document.getElementById('currentGame').textContent = game;
+                    document.getElementById('status').className = 'status connected';
+                    document.getElementById('status').textContent = 'Conectado';
+                    
+                    // Carrega jogo no iframe
+                    document.getElementById('gameFrame').src = data.gameUrl;
+                    
+                    // Salva no localStorage para referência
+                    localStorage.setItem('lastGame', game);
+                    localStorage.setItem('lastUserId', userId);
+                } else {
+                    throw new Error('Falha ao gerar token');
+                }
+            } catch (error) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = 'Erro: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        function refreshGame() {
+            // Recarrega com novo token
+            launchGame();
+        }
+        
+        function openConfig() {
+            window.open('http://localhost:3001/games', '_blank');
+        }
+        
+        // Auto-load último jogo usado
+        window.onload = function() {
+            const lastGame = localStorage.getItem('lastGame');
+            const lastUserId = localStorage.getItem('lastUserId');
+            
+            if (lastGame) {
+                document.getElementById('gameSelect').value = lastGame;
+            }
+            if (lastUserId) {
+                document.getElementById('userId').value = lastUserId;
+            }
+        }
+    </script>
+</body>
+</html>

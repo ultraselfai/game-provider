@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B2B API Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #16a085; }
+    .section {
+      background: #16213e;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    button {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover { background: #1abc9c; }
+    pre {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    .success { color: #2ecc71; }
+    .error { color: #e74c3c; }
+    .info { color: #3498db; }
+  </style>
+</head>
+<body>
+  <h1>🎰 Game Provider - B2B API Test</h1>
+
+  <!-- 1. Create Operator -->
+  <div class="section">
+    <h2>1. Criar Operador (Admin)</h2>
+    <label>Nome do Operador:</label>
+    <input type="text" id="operatorName" value="BetDemo" placeholder="Nome do operador">
+    <label>Webhook URL:</label>
+    <input type="text" id="webhookUrl" value="https://api.betdemo.com/webhook" placeholder="URL do webhook">
+    <button onclick="createOperator()">Criar Operador</button>
+    <pre id="createOperatorResult">Clique no botão para criar...</pre>
+  </div>
+
+  <!-- 2. Authenticate -->
+  <div class="section">
+    <h2>2. Autenticar Operador</h2>
+    <label>API Key:</label>
+    <input type="text" id="apiKey" placeholder="op_xxxxx">
+    <label>API Secret:</label>
+    <input type="text" id="apiSecret" placeholder="Copie o secret retornado acima">
+    <button onclick="authenticate()">Autenticar</button>
+    <pre id="authResult">Clique no botão para autenticar...</pre>
+  </div>
+
+  <!-- 3. Create Session -->
+  <div class="section">
+    <h2>3. Criar Sessão de Jogo</h2>
+    <label>Access Token:</label>
+    <input type="text" id="accessToken" placeholder="Token retornado da autenticação">
+    <label>User ID (Player):</label>
+    <input type="text" id="userId" value="player_123">
+    <label>Game ID:</label>
+    <input type="text" id="gameId" value="fortune-tiger">
+    <label>Moeda:</label>
+    <input type="text" id="currency" value="BRL">
+    <button onclick="createSession()">Criar Sessão</button>
+    <pre id="sessionResult">Clique no botão para criar sessão...</pre>
+  </div>
+
+  <!-- 4. List Operators -->
+  <div class="section">
+    <h2>4. Listar Operadores (Admin)</h2>
+    <button onclick="listOperators()">Listar Operadores</button>
+    <pre id="listResult">Clique no botão para listar...</pre>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api/v1/agent';
+    const ADMIN_KEY = 'dev-admin-key';
+
+    async function createOperator() {
+      const resultEl = document.getElementById('createOperatorResult');
+      try {
+        const response = await fetch(`${API_BASE}/operators`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': ADMIN_KEY
+          },
+          body: JSON.stringify({
+            name: document.getElementById('operatorName').value,
+            webhookUrl: document.getElementById('webhookUrl').value
+          })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('apiKey').value = data.data.apiKey;
+          document.getElementById('apiSecret').value = data.data.apiSecret;
+          resultEl.innerHTML = `<span class="success">✅ Operador criado!</span>\n\n` +
+            `API Key: ${data.data.apiKey}\n` +
+            `API Secret: ${data.data.apiSecret}\n\n` +
+            `⚠️ GUARDE O API SECRET - Ele não será mostrado novamente!`;
+        } else {
+          resultEl.innerHTML = `<span class="error">❌ Erro:</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (err) {
+        resultEl.innerHTML = `<span class="error">❌ Erro: ${err.message}</span>`;
+      }
+    }
+
+    async function authenticate() {
+      const resultEl = document.getElementById('authResult');
+      try {
+        const response = await fetch(`${API_BASE}/auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiKey: document.getElementById('apiKey').value,
+            apiSecret: document.getElementById('apiSecret').value
+          })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('accessToken').value = data.data.accessToken;
+          resultEl.innerHTML = `<span class="success">✅ Autenticado!</span>\n\n` +
+            `Access Token: ${data.data.accessToken}\n` +
+            `Expira em: ${data.data.expiresIn} segundos`;
+        } else {
+          resultEl.innerHTML = `<span class="error">❌ Erro:</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (err) {
+        resultEl.innerHTML = `<span class="error">❌ Erro: ${err.message}</span>`;
+      }
+    }
+
+    async function createSession() {
+      const resultEl = document.getElementById('sessionResult');
+      try {
+        const response = await fetch(`${API_BASE}/sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${document.getElementById('accessToken').value}`
+          },
+          body: JSON.stringify({
+            userId: document.getElementById('userId').value,
+            gameId: document.getElementById('gameId').value,
+            currency: document.getElementById('currency').value,
+            mode: 'real',
+            returnUrl: 'https://mybetsite.com/lobby'
+          })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          resultEl.innerHTML = `<span class="success">✅ Sessão criada!</span>\n\n` +
+            `Session Token: ${data.data.sessionToken}\n` +
+            `Launch URL: ${data.data.launchUrl}\n` +
+            `Expira: ${data.data.expiresAt}\n\n` +
+            `<a href="${data.data.launchUrl}" target="_blank" style="color:#1abc9c">🎮 Abrir Jogo</a>`;
+        } else {
+          resultEl.innerHTML = `<span class="error">❌ Erro:</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (err) {
+        resultEl.innerHTML = `<span class="error">❌ Erro: ${err.message}</span>`;
+      }
+    }
+
+    async function listOperators() {
+      const resultEl = document.getElementById('listResult');
+      try {
+        const response = await fetch(`${API_BASE}/operators`, {
+          headers: { 'x-admin-key': ADMIN_KEY }
+        });
+        const data = await response.json();
+        resultEl.innerHTML = `<span class="info">📋 Operadores:</span>\n\n${JSON.stringify(data, null, 2)}`;
+      } catch (err) {
+        resultEl.innerHTML = `<span class="error">❌ Erro: ${err.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>

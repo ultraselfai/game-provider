@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🐯 Testar Fortune Tiger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 30px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container { max-width: 800px; margin: 0 auto; text-align: center; }
+        h1 { color: #f39c12; font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #aaa; margin-bottom: 30px; }
+
+        .step-box {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #f39c12;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .step-number {
+            background: #f39c12;
+            color: #000;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 15px;
+        }
+        .step-title { font-size: 1.3em; display: inline; }
+        .step-content { margin-top: 15px; padding-left: 55px; }
+
+        button {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.4);
+        }
+        button.secondary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        button.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .info-box {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .warning-box {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px 20px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        #gameLink {
+            display: block;
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 10px;
+            word-break: break-all;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+
+        .checklist {
+            text-align: left;
+            padding-left: 55px;
+        }
+        .checklist label {
+            display: block;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+        .checklist input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐯 Fortune Tiger - Teste Real</h1>
+        <p class="subtitle">Siga os passos para testar o jogo sem cache</p>
+
+        <!-- PASSO 1 -->
+        <div class="step-box">
+            <span class="step-number">1</span>
+            <span class="step-title">Limpar Cache do Navegador</span>
+            <div class="step-content">
+                <p>É ESSENCIAL limpar o cache para garantir que o navegador busque os dados novos da API.</p>
+
+                <div class="checklist">
+                    <label><input type="checkbox" id="check1"> Pressione <code>Ctrl + Shift + Delete</code></label>
+                    <label><input type="checkbox" id="check2"> Selecione "Imagens e arquivos em cache"</label>
+                    <label><input type="checkbox" id="check3"> Clique em "Limpar dados"</label>
+                </div>
+
+                <button class="secondary" onclick="openCacheClear()">📋 Abrir Limpeza de Cache (Chrome)</button>
+            </div>
+        </div>
+
+        <!-- PASSO 2 -->
+        <div class="step-box">
+            <span class="step-number">2</span>
+            <span class="step-title">Abrir o Jogo com Cache-Buster</span>
+            <div class="step-content">
+                <p>Este link inclui um parâmetro único para forçar o navegador a não usar cache:</p>
+
+                <div id="gameLink"></div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="openGame()">🎮 ABRIR JOGO</button>
+                    <button class="secondary" onclick="openGameIncognito()">🕵️ Abrir em Aba Anônima</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASSO 3 -->
+        <div class="step-box">
+            <span class="step-number">3</span>
+            <span class="step-title">Verificar Console (se possível)</span>
+            <div class="step-content">
+                <div class="warning-box">
+                    <strong>⚠️ Nota:</strong> O jogo bloqueia F12 e clique direito. Mas você pode:
+                    <ul>
+                        <li>Abrir DevTools ANTES de carregar o jogo (Ctrl+Shift+I em uma aba vazia)</li>
+                        <li>Depois navegar para o link do jogo nessa mesma aba</li>
+                    </ul>
+                </div>
+
+                <p>No Console, procure por:</p>
+                <ul>
+                    <li><code>JSON result</code> - Deve mostrar os dados da API</li>
+                    <li><code>e</code> - Se aparecer, mostra o erro específico</li>
+                    <li>Erros vermelhos com detalhes</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PASSO 4 -->
+        <div class="step-box">
+            <span class="step-number">4</span>
+            <span class="step-title">Teste Alternativo - iframe</span>
+            <div class="step-content">
+                <p>Se quiser, posso carregar o jogo aqui mesmo em um iframe (permite ver console desta página):</p>
+
+                <button onclick="loadInIframe()">📺 Carregar em iframe</button>
+                <button class="danger" onclick="clearIframe()">❌ Fechar iframe</button>
+
+                <div id="iframeContainer" style="margin-top: 20px; display: none;">
+                    <iframe id="gameIframe" style="width: 100%; height: 600px; border: 3px solid #f39c12; border-radius: 10px;"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- INFO BOX -->
+        <div class="info-box">
+            <strong>ℹ️ Informação:</strong><br>
+            Token de teste: <code>test123</code><br>
+            Saldo inicial: <code>R$ 1000.00</code><br>
+            API Server: <code>http://localhost:3006</code>
+        </div>
+    </div>
+
+    <script>
+        const token = 'test123';
+        const cacheBuster = Date.now();
+        const gameUrl = `/originals/fortunetiger/?token=${token}&_=${cacheBuster}`;
+
+        // Mostrar link
+        document.getElementById('gameLink').textContent = window.location.origin + gameUrl;
+
+        function openGame() {
+            window.open(gameUrl, '_blank');
+        }
+
+        function openGameIncognito() {
+            alert('Para abrir em aba anônima:\n\n1. Pressione Ctrl+Shift+N\n2. Cole este link:\n\n' + window.location.origin + gameUrl);
+        }
+
+        function openCacheClear() {
+            // Chrome
+            if (navigator.userAgent.indexOf('Chrome') !== -1) {
+                window.open('chrome://settings/clearBrowserData', '_blank');
+            }
+            alert('Se não abriu automaticamente:\n\nPressione Ctrl + Shift + Delete');
+        }
+
+        function loadInIframe() {
+            const container = document.getElementById('iframeContainer');
+            const iframe = document.getElementById('gameIframe');
+            container.style.display = 'block';
+            iframe.src = gameUrl;
+
+            // Monitorar iframe
+            console.log('Iframe carregando:', gameUrl);
+        }
+
+        function clearIframe() {
+            const container = document.getElementById('iframeContainer');
+            const iframe = document.getElementById('gameIframe');
+            iframe.src = 'about:blank';
+            container.style.display = 'none';
+        }
+
+        // Log para debug
+        console.log('=== PÁGINA DE TESTE DO FORTUNE TIGER ===');
+        console.log('Token:', token);
+        console.log('URL do jogo:', gameUrl);
+        console.log('Cache buster:', cacheBuster);
+
+        // Interceptar erros do iframe
+        window.addEventListener('message', function(e) {
+            console.log('Mensagem do iframe:', e.data);
+        });
+    </script>
+</body>
+</html>

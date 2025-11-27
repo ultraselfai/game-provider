@@ -1,0 +1,11 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/agents/page": "/agents",
+  "/games/page": "/games",
+  "/login/page": "/login",
+  "/operators/page": "/operators",
+  "/page": "/",
+  "/sessions/page": "/sessions",
+  "/transactions/page": "/transactions"
+}

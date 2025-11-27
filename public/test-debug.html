@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug - Fortune Tiger API Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #0f0;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .log-box {
+            background: #000;
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry { margin: 5px 0; padding: 5px; border-bottom: 1px solid #333; }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+        .info { color: #0ff; }
+        .warn { color: #ff0; }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        button:hover { background: #0a0; }
+        .response-box {
+            background: #111;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status { font-size: 24px; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0; }
+        .status.ok { background: #0a3; }
+        .status.fail { background: #a00; }
+        input { padding: 10px; margin: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐯 Fortune Tiger - API Debug Tool</h1>
+
+        <div>
+            <label>Token: <input type="text" id="token" value="test123" size="40"></label>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button onclick="testSession()">1. Testar SESSION</button>
+            <button onclick="testSpin()">2. Testar SPIN</button>
+            <button onclick="testGameLoad()">3. Simular LoadGame()</button>
+            <button onclick="clearLogs()">Limpar Logs</button>
+        </div>
+
+        <div id="status" class="status" style="display:none;"></div>
+
+        <h2>📋 Logs</h2>
+        <div id="logs" class="log-box"></div>
+
+        <h2>📦 Última Resposta</h2>
+        <div id="response" class="response-box">Nenhuma requisição feita ainda...</div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/vgames';
+
+        function log(msg, type = 'info') {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logs.insertBefore(entry, logs.firstChild);
+        }
+
+        function showStatus(ok, msg) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.className = `status ${ok ? 'ok' : 'fail'}`;
+            status.textContent = msg;
+        }
+
+        function showResponse(data) {
+            document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('response').textContent = 'Limpo...';
+            document.getElementById('status').style.display = 'none';
+        }
+
+        async function testSession() {
+            const token = document.getElementById('token').value;
+            log(`Testando SESSION com token: ${token}`, 'info');
+
+            try {
+                const url = `${API_BASE}/${token}/session`;
+                log(`GET ${url}`, 'info');
+
+                const response = await fetch(url);
+                log(`Status HTTP: ${response.status}`, response.ok ? 'success' : 'error');
+
+                const text = await response.text();
+                log(`Resposta raw (${text.length} chars)`, 'info');
+
+                try {
+                    const json = JSON.parse(text);
+                    showResponse(json);
+
+                    if (json.success) {
+                        log('✅ success = true', 'success');
+
+                        // Verificar campos críticos
+                        const data = json.data;
+                        const checks = [
+                            ['user_name', data.user_name],
+                            ['credit', data.credit],
+                            ['num_line', data.num_line],
+                            ['bet_amount', data.bet_amount],
+                            ['free_num', data.free_num],
+                            ['icon_data', data.icon_data?.length + ' items'],
+                            ['feature', data.feature ? 'OK' : 'MISSING'],
+                            ['bet_size_list', data.bet_size_list?.length + ' items'],
+                            ['currency_prefix', data.currency_prefix],
+                        ];
+
+                        checks.forEach(([key, val]) => {
+                            if (val !== undefined && val !== null) {
+                                log(`  ✅ ${key}: ${val}`, 'success');
+                            } else {
+                                log(`  ❌ ${key}: MISSING!`, 'error');
+                            }
+                        });
+
+                        if (data.credit > 0) {
+                            showStatus(true, `✅ SESSION OK! Saldo: R$ ${data.credit}`);
+                        } else {
+                            showStatus(false, `⚠️ SESSION OK mas saldo é ${data.credit}`);
+                        }
+                    } else {
+                        log('❌ success = false', 'error');
+                        showStatus(false, '❌ API retornou success: false');
+                    }
+                } catch (parseError) {
+                    log(`❌ Erro ao parsear JSON: ${parseError.message}`, 'error');
+                    log(`Resposta recebida: ${text.substring(0, 200)}...`, 'error');
+                    showStatus(false, '❌ Resposta não é JSON válido');
+                    showResponse({ error: 'Parse failed', raw: text });
+                }
+            } catch (fetchError) {
+                log(`❌ Erro de conexão: ${fetchError.message}`, 'error');
+                showStatus(false, `❌ Erro: ${fetchError.message}`);
+            }
+        }
+
+        async function testSpin() {
+            const token = document.getElementById('token').value;
+            log(`Testando SPIN com token: ${token}`, 'info');
+
+            try {
+                const url = `${API_BASE}/${token}/spin`;
+                const body = 'betamount=0.2&numline=5&cpl=1';
+                log(`POST ${url}`, 'info');
+                log(`Body: ${body}`, 'info');
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: body
+                });
+
+                log(`Status HTTP: ${response.status}`, response.ok ? 'success' : 'error');
+
+                const json = await response.json();
+                showResponse(json);
+
+                if (json.success && json.data) {
+                    log('✅ SPIN success', 'success');
+                    log(`  credit: ${json.data.credit}`, 'success');
+                    log(`  pull.WinAmount: ${json.data.pull?.WinAmount}`, 'success');
+                    log(`  pull.SlotIcons: ${json.data.pull?.SlotIcons?.length} items`, 'success');
+                    showStatus(true, `✅ SPIN OK! Ganhou: R$ ${json.data.pull?.WinAmount || 0}`);
+                } else {
+                    log('❌ SPIN failed', 'error');
+                    showStatus(false, '❌ SPIN falhou');
+                }
+            } catch (error) {
+                log(`❌ Erro: ${error.message}`, 'error');
+                showStatus(false, `❌ Erro: ${error.message}`);
+            }
+        }
+
+        async function testGameLoad() {
+            const token = document.getElementById('token').value;
+            log('=== SIMULANDO LoadGame() do Construct 3 ===', 'warn');
+
+            try {
+                // Simula exatamente o que o jogo faz
+                const url = `${API_BASE}/${token}/session`;
+                log(`Fazendo requisição como o jogo faria...`, 'info');
+
+                // XMLHttpRequest como o jogo usa
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.setRequestHeader('X-Ncash-token', token);
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        log(`Status: ${xhr.status}`, xhr.status === 200 ? 'success' : 'error');
+
+                        if (xhr.status === 200) {
+                            try {
+                                const t = JSON.parse(xhr.responseText);
+                                log('JSON.parse OK', 'success');
+
+                                if (t.success) {
+                                    log('t.success = true', 'success');
+                                    const c = t.data;
+
+                                    // Simula exatamente o que o jogo faz (linha 6963)
+                                    try {
+                                        const UserName = c.user_name;
+                                        const Credit = c.credit;
+                                        const FreeSpin = c.free_num;
+                                        const LineNumber = c.num_line;
+                                        const BetAmount = c.bet_amount;
+                                        const CreditPerLine = c.credit_line;
+                                        const Slots = c.icon_data;
+                                        const Actives = c.active_icons;
+                                        const LineActives = c.active_lines;
+                                        const FeatureData = c.feature;
+                                        const BetSizeList = c.bet_size_list;
+
+                                        log(`UserName: ${UserName}`, 'success');
+                                        log(`Credit: ${Credit}`, 'success');
+                                        log(`FreeSpin: ${FreeSpin}`, 'success');
+                                        log(`LineNumber: ${LineNumber}`, 'success');
+                                        log(`BetAmount: ${BetAmount}`, 'success');
+                                        log(`CreditPerLine: ${CreditPerLine}`, 'success');
+                                        log(`Slots: ${Slots?.length} items`, 'success');
+                                        log(`FeatureData: ${FeatureData ? 'OK' : 'NULL'}`, FeatureData ? 'success' : 'error');
+                                        log(`BetSizeList: ${BetSizeList?.length} items`, 'success');
+
+                                        showStatus(true, '✅ LoadGame() SIMULADO COM SUCESSO!');
+                                        showResponse(t);
+
+                                    } catch (accessError) {
+                                        log(`❌ ERRO ao acessar campos: ${accessError.message}`, 'error');
+                                        showStatus(false, `❌ Erro: ${accessError.message}`);
+                                    }
+                                } else {
+                                    log('t.success = false ou undefined', 'error');
+                                    showStatus(false, '❌ success não é true');
+                                }
+                            } catch (parseError) {
+                                log(`❌ JSON.parse FALHOU: ${parseError.message}`, 'error');
+                                log(`Este é o erro que causa "Saldo Insuficiente"!`, 'error');
+                                log(`Resposta: ${xhr.responseText.substring(0, 100)}`, 'error');
+                                showStatus(false, '❌ JSON Parse Error - ESTE É O PROBLEMA!');
+                            }
+                        } else if (xhr.status === 401) {
+                            log('Status 401 - Unauthenticated', 'error');
+                        } else {
+                            log(`Erro HTTP: ${xhr.status}`, 'error');
+                        }
+                    }
+                };
+
+                xhr.send(null);
+
+            } catch (error) {
+                log(`❌ Erro geral: ${error.message}`, 'error');
+                showStatus(false, `❌ ${error.message}`);
+            }
+        }
+
+        // Auto-teste ao carregar
+        log('Página de debug carregada', 'info');
+        log('Clique nos botões para testar a API', 'info');
+    </script>
+</body>
+</html>

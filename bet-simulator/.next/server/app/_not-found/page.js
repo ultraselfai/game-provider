@@ -1,0 +1,13 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_not-found/page.js")
+R.c("server/chunks/ssr/bet-simulator_1e70f6ae._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0c26b7eb._.js")
+R.c("server/chunks/ssr/aaaed_next_dist_esm_build_templates_app-page_b6d8a893.js")
+R.c("server/chunks/ssr/[root-of-the-server]__18baa44f._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__8e8eca03._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__d4039060._.js")
+R.c("server/chunks/ssr/bet-simulator_src_app_layout_tsx_2537353a._.js")
+R.c("server/chunks/ssr/aaaed_next_dist_client_components_e6fd3bac._.js")
+R.c("server/chunks/ssr/aaaed_next_dist_client_components_builtin_forbidden_de442919.js")
+R.c("server/chunks/ssr/bet-simulator__next-internal_server_app__not-found_page_actions_4dfe7e15.js")
+R.m(34745)
+module.exports=R.m(34745).exports

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🐂 Testar Fortune Ox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 30px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container { max-width: 900px; margin: 0 auto; text-align: center; }
+        h1 { color: #e74c3c; font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #aaa; margin-bottom: 30px; }
+        .game-info {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .info-item { text-align: center; }
+        .info-label { color: #aaa; font-size: 0.9em; }
+        .info-value { color: #e74c3c; font-size: 1.3em; font-weight: bold; }
+        button {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.4em;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+        }
+        button.secondary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            padding: 12px 30px;
+            font-size: 1em;
+        }
+        #gameLink {
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 10px;
+            word-break: break-all;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        #iframeContainer {
+            margin-top: 30px;
+            display: none;
+        }
+        #gameIframe {
+            width: 100%;
+            height: 700px;
+            border: 3px solid #e74c3c;
+            border-radius: 15px;
+        }
+        .status { margin-top: 20px; padding: 15px; border-radius: 10px; }
+        .status.success { background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; }
+        .status.error { background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐂 Fortune Ox</h1>
+        <p class="subtitle">Teste do jogo com backend integrado</p>
+
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">Grid</div>
+                <div class="info-value">3x3</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Linhas</div>
+                <div class="info-value">10</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">RTP</div>
+                <div class="info-value">96.5%</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Volatilidade</div>
+                <div class="info-value">Média</div>
+            </div>
+        </div>
+
+        <div id="gameLink"></div>
+
+        <button onclick="openGame()">🎮 ABRIR JOGO EM NOVA ABA</button>
+        <br>
+        <button class="secondary" onclick="loadInIframe()">📺 Carregar aqui (iframe)</button>
+        <button class="secondary" onclick="testAPI()">🔧 Testar API</button>
+
+        <div id="status"></div>
+
+        <div id="iframeContainer">
+            <button class="secondary" onclick="closeIframe()">❌ Fechar</button>
+            <iframe id="gameIframe"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const GAME_ID = 'fortuneox';
+        const GAME_NAME = 'Fortune Ox';
+        const API_BASE = 'http://localhost:3006';
+
+        let token = null;
+        const cacheBuster = Date.now();
+
+        // Gerar token ao carregar
+        async function init() {
+            try {
+                const resp = await fetch(`${API_BASE}/api/vgames/test/generate-token/test-user-001/${GAME_ID}`);
+                const data = await resp.json();
+                token = data.token;
+                
+                const gameUrl = `/originals/${GAME_ID}/?token=${token}&_=${cacheBuster}`;
+                document.getElementById('gameLink').textContent = window.location.origin + gameUrl;
+                
+                showStatus('✅ Token gerado com sucesso!', 'success');
+                console.log('Token:', token);
+            } catch (e) {
+                showStatus('❌ Erro ao gerar token: ' + e.message, 'error');
+            }
+        }
+
+        function openGame() {
+            if (!token) { alert('Aguarde o token ser gerado'); return; }
+            window.open(`/originals/${GAME_ID}/?token=${token}&_=${cacheBuster}`, '_blank');
+        }
+
+        function loadInIframe() {
+            if (!token) { alert('Aguarde o token ser gerado'); return; }
+            document.getElementById('iframeContainer').style.display = 'block';
+            document.getElementById('gameIframe').src = `/originals/${GAME_ID}/?token=${token}&_=${cacheBuster}`;
+        }
+
+        function closeIframe() {
+            document.getElementById('iframeContainer').style.display = 'none';
+            document.getElementById('gameIframe').src = 'about:blank';
+        }
+
+        async function testAPI() {
+            if (!token) { alert('Aguarde o token ser gerado'); return; }
+            
+            try {
+                // Testar session
+                const sessionResp = await fetch(`${API_BASE}/api/vgames/${token}/session`);
+                const session = await sessionResp.json();
+                console.log('Session:', session);
+
+                // Testar spin
+                const spinResp = await fetch(`${API_BASE}/api/vgames/${token}/spin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bet: 2.5 })
+                });
+                const spin = await spinResp.json();
+                console.log('Spin:', spin);
+
+                const result = spin.data;
+                showStatus(`✅ API OK! Spin: Win=${result.pull.WinAmount} | Balance=${result.credit}`, 'success');
+            } catch (e) {
+                showStatus('❌ Erro na API: ' + e.message, 'error');
+            }
+        }
+
+        function showStatus(msg, type) {
+            document.getElementById('status').innerHTML = `<div class="status ${type}">${msg}</div>`;
+        }
+
+        init();
+    </script>
+</body>
+</html>

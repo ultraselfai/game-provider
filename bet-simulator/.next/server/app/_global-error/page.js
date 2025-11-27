@@ -1,0 +1,10 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_global-error/page.js")
+R.c("server/chunks/ssr/aaaed_39a6386f._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0c26b7eb._.js")
+R.c("server/chunks/ssr/aaaed_next_dist_24c561ba._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__18baa44f._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__8e8eca03._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__d4039060._.js")
+R.c("server/chunks/ssr/bet-simulator__next-internal_server_app__global-error_page_actions_d074d2a3.js")
+R.m(52657)
+module.exports=R.m(52657).exports

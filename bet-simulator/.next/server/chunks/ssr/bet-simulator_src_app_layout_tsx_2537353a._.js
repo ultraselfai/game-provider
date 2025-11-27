@@ -1,0 +1,3 @@
+module.exports=[73949,a=>{"use strict";var b=a.i(67408);function c({children:a}){return(0,b.jsx)("html",{lang:"pt-BR",children:(0,b.jsx)("body",{className:"bg-gray-900 text-white min-h-screen",children:a})})}a.s(["default",()=>c,"metadata",0,{title:"Bet Simulator - Teste de Integração",description:"Simulador de Bet para testar integração com Game Provider"}])}];
+
+//# sourceMappingURL=bet-simulator_src_app_layout_tsx_2537353a._.js.map

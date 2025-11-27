@@ -1,0 +1,151 @@
+# Docker Compose - Game Provider Engine
+# Uso:
+#   docker compose up -d postgres redis  (banco e cache)
+#   docker compose up -d                 (tudo incluindo API)
+#   docker compose --profile tools up -d (com pgAdmin e Redis Commander)
+
+services:
+  # ===========================================
+  # PostgreSQL - Banco de dados principal
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: game-provider-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-gameadmin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gamepass123}
+      POSTGRES_DB: ${DB_NAME:-game_provider}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gameadmin} -d ${DB_NAME:-game_provider}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - game-network
+
+  # ===========================================
+  # Redis - Cache e sessões
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: game-provider-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass123}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispass123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - game-network
+
+  # ===========================================
+  # Game Provider API - NestJS Application
+  # ===========================================
+  game-provider:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development}
+    container_name: game-provider-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3000}
+      # PostgreSQL
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-gameadmin}
+      DB_PASSWORD: ${DB_PASSWORD:-gamepass123}
+      DB_NAME: ${DB_NAME:-game_provider}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redispass123}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
+      # Webhook
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-webhook-secret-key}
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      # Development: mount source code for hot reload
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - game-network
+
+  # ===========================================
+  # pgAdmin - Interface web para PostgreSQL (opcional)
+  # ===========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: game-provider-pgadmin
+    restart: unless-stopped
+    profiles:
+      - tools
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@game.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - game-network
+
+  # ===========================================
+  # Redis Commander - Interface web para Redis (opcional)
+  # ===========================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: game-provider-redis-ui
+    restart: unless-stopped
+    profiles:
+      - tools
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD:-redispass123}
+    ports:
+      - "${REDIS_UI_PORT:-8081}:8081"
+    depends_on:
+      - redis
+    networks:
+      - game-network
+
+# ===========================================
+# Volumes persistentes
+# ===========================================
+volumes:
+  postgres_data:
+    name: game-provider-postgres-data
+  redis_data:
+    name: game-provider-redis-data
+  pgadmin_data:
+    name: game-provider-pgadmin-data
+
+# ===========================================
+# Rede interna
+# ===========================================
+networks:
+  game-network:
+    name: game-provider-network
+    driver: bridge
