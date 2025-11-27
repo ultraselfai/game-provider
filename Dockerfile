@@ -33,15 +33,17 @@ CMD ["npm", "run", "start:dev"]
 # ============================================
 FROM base AS build
 
-# Forçar instalação de todas as dependências (incluindo devDependencies)
-ENV NODE_ENV=development
-RUN npm ci --include=dev
+# IMPORTANTE: Forçar instalação de todas as dependências (incluindo devDependencies)
+# Usar --ignore-scripts para evitar problemas e --include=dev para garantir devDeps
+# Mesmo que NODE_ENV=production seja passado, --include=dev sobrescreve
+RUN npm ci --include=dev --ignore-scripts
 
 # Copiar código fonte
 COPY . .
 
 # Build da aplicação
-RUN npm run build
+# Executar build manualmente usando npx para garantir que @nestjs/cli está disponível
+RUN npx nest build
 
 # Remover devDependencies para produção
 RUN npm prune --production
