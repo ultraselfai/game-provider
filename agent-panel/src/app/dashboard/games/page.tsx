@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AGENT_API } from '@/lib/config';
+import { API_BASE, AGENT_API } from '@/lib/config';
 
 interface Agent {
   id: string;
