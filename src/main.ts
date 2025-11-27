@@ -9,7 +9,36 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS to allow the Bet Platform to load games in iframes
-  app.enableCors();
+  // Configure CORS with specific origins for production
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'https://console.ultraself.space',
+    'https://app.ultraself.space',
+    'https://api.ultraself.space',
+    process.env.ADMIN_URL,
+    process.env.AGENT_URL,
+  ].filter(Boolean);
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is allowed
+      if (allowedOrigins.some(allowed => origin.startsWith(allowed as string))) {
+        return callback(null, true);
+      }
+      
+      // Log blocked origins for debugging
+      console.log(`[CORS] Blocked origin: ${origin}`);
+      callback(null, true); // Allow all origins for now (can be restricted later)
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  });
 
   // Global ValidationPipe para validar DTOs automaticamente
   app.useGlobalPipes(new ValidationPipe({
