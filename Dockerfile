@@ -21,8 +21,8 @@ COPY . .
 # Build da aplicacao NestJS
 RUN npm run build
 
-# Verificar que o build foi criado
-RUN ls -la dist/ && ls -la dist/main.js
+# Verificar estrutura do build
+RUN ls -laR dist/ | head -50
 
 # Remover devDependencies apos o build para reduzir tamanho da imagem
 RUN npm prune --omit=dev
@@ -49,5 +49,5 @@ ENTRYPOINT ["dumb-init", "--"]
 ENV NODE_ENV=production
 ENV PORT=3006
 
-# Comando para producao
-CMD ["node", "dist/main.js"]
+# Comando para producao - NestJS compila para dist/src/
+CMD ["node", "dist/src/main.js"]
