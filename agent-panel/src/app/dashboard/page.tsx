@@ -10,6 +10,9 @@ interface Agent {
   name: string;
   email: string;
   balance: number;
+  spinCredits: number;
+  totalCreditsPurchased: number;
+  totalSpinsConsumed: number;
   ggrRate: number;
   isActive: boolean;
   apiKey: string;
@@ -109,13 +112,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Saldo Central */}
+            {/* Créditos de Spin */}
             <div className="flex items-center gap-2 bg-slate-700/50 rounded-xl px-6 py-3 border border-slate-600">
-              <span className="text-2xl">💰</span>
+              <span className="text-2xl">🎰</span>
               <div className="text-right">
-                <p className="text-xs text-slate-400">Saldo Disponível</p>
-                <p className={`text-2xl font-bold ${Number(agent?.balance) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  R$ {Number(agent?.balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="text-xs text-slate-400">Créditos de Spin</p>
+                <p className={`text-2xl font-bold ${Number(agent?.spinCredits) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(agent?.spinCredits || 0).toLocaleString('pt-BR')} créditos
                 </p>
               </div>
             </div>
@@ -174,10 +177,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-slate-400">Total Créditos</p>
                 <p className="text-xl font-bold text-emerald-400">
-                  R$ {transactions
-                    .filter(t => t.type === 'credit')
-                    .reduce((sum, t) => sum + Number(t.amount), 0)
-                    .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  {Number(agent?.totalCreditsPurchased || 0).toLocaleString('pt-BR')} créditos
                 </p>
               </div>
             </div>
@@ -189,10 +189,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-slate-400">Total Consumido</p>
                 <p className="text-xl font-bold text-red-400">
-                  R$ {transactions
-                    .filter(t => t.type === 'debit')
-                    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
-                    .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  {Number(agent?.totalSpinsConsumed || 0).toLocaleString('pt-BR')} spins
                 </p>
               </div>
             </div>
@@ -281,10 +278,10 @@ export default function DashboardPage() {
           <div className="flex items-start gap-3">
             <span className="text-2xl">💡</span>
             <div>
-              <h3 className="font-medium text-blue-300">Como funciona o saldo?</h3>
+              <h3 className="font-medium text-blue-300">Como funcionam os créditos?</h3>
               <p className="text-sm text-blue-200/70 mt-1">
-                Seu saldo é consumido quando os jogadores da sua bet utilizam os jogos. 
-                Cada rodada debita o valor da aposta do seu saldo. Para adicionar créditos, 
+                Seus créditos de spin são consumidos quando os jogadores da sua bet utilizam os jogos. 
+                Cada rodada (spin) debita 1 crédito. Para adicionar mais créditos, 
                 entre em contato com o provedor via PIX ou transferência bancária.
               </p>
             </div>
