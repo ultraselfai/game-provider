@@ -36,6 +36,9 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Copiar middleware se existir (necessário para autenticação)
+COPY --from=builder /app/.next/server/middleware*.* ./.next/server/
+
 # Copiar public se existir (pode estar vazio)
 COPY --from=builder /app/public ./public
 
