@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AdminHeader from '@/components/AdminHeader';
 import { API_BASE, ADMIN_KEY } from '@/lib/config';
 
