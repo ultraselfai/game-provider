@@ -16,8 +16,8 @@ import { Agent, AgentTransaction, GameSession, GameRound, Transaction, GameSetti
         password: configService.get<string>('DB_PASSWORD', 'gamepass123'),
         database: configService.get<string>('DB_NAME', 'game_provider'),
         entities: [Agent, AgentTransaction, GameSession, GameRound, Transaction, GameSettings],
-        // Em produção, usar migrations ao invés de synchronize
-        synchronize: configService.get<string>('NODE_ENV') === 'development',
+        // Usar DB_SYNC=true para sincronizar tabelas (útil no primeiro deploy)
+        synchronize: configService.get<string>('DB_SYNC', 'false') === 'true',
         logging: configService.get<string>('NODE_ENV') === 'development',
         // Pool de conexões
         extra: {
