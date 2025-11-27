@@ -16,15 +16,22 @@ import { Agent, AgentTransaction, GameSession, GameRound, Transaction, GameSetti
         password: configService.get<string>('DB_PASSWORD', 'gamepass123'),
         database: configService.get<string>('DB_NAME', 'game_provider'),
         entities: [Agent, AgentTransaction, GameSession, GameRound, Transaction, GameSettings],
+        // SSL para conexões em produção (desabilitar verificação de certificado para conexões internas)
+        ssl: configService.get<string>('DB_SSL', 'false') === 'true' 
+          ? { rejectUnauthorized: false } 
+          : false,
         // Usar DB_SYNC=true para sincronizar tabelas (útil no primeiro deploy)
         synchronize: configService.get<string>('DB_SYNC', 'false') === 'true',
         logging: configService.get<string>('NODE_ENV') === 'development',
-        // Pool de conexões
+        // Pool de conexões - timeout maior para ambientes containerizados
         extra: {
           max: 20, // máximo de conexões
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 2000,
+          connectionTimeoutMillis: 10000, // 10 segundos para conexão inicial
         },
+        // Retry automático na conexão
+        retryAttempts: 10,
+        retryDelay: 3000,
       }),
     }),
     // Exportar repositórios para uso em outros módulos
