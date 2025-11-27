@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import AdminHeader from '@/components/AdminHeader';
 import { ADMIN_API } from '@/lib/config';
 
 interface GameSettings {
@@ -113,22 +113,7 @@ export default function GamesPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🎰</span>
-            <h1 className="text-xl font-bold text-white">Game Provider Admin</h1>
-          </div>
-          <nav className="flex gap-6">
-            <Link href="/" className="text-slate-400 hover:text-white transition">Dashboard</Link>
-            <Link href="/agents" className="text-slate-400 hover:text-white transition">Agentes</Link>
-            <Link href="/games" className="text-emerald-400 font-medium">Games</Link>
-            <Link href="/sessions" className="text-slate-400 hover:text-white transition">Sessões</Link>
-            <Link href="/transactions" className="text-slate-400 hover:text-white transition">Transações</Link>
-          </nav>
-        </div>
-      </header>
+      <AdminHeader />
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-6 py-8">
