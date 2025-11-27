@@ -33,17 +33,18 @@ CMD ["npm", "run", "start:dev"]
 # ============================================
 FROM base AS build
 
-# IMPORTANTE: Forçar instalação de todas as dependências (incluindo devDependencies)
-# Usar --ignore-scripts para evitar problemas e --include=dev para garantir devDeps
-# Mesmo que NODE_ENV=production seja passado, --include=dev sobrescreve
-RUN npm ci --include=dev --ignore-scripts
+# IMPORTANTE: Ignorar NODE_ENV passado pelo Coolify para garantir devDependencies
+# Unset NODE_ENV e forçar instalação completa
+ARG NODE_ENV
+RUN unset NODE_ENV && npm ci
 
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
-# Executar build manualmente usando npx para garantir que @nestjs/cli está disponível
-RUN npx nest build
+# Build da aplicação - verificar que nest está disponível
+RUN ls -la node_modules/.bin/ | grep nest || echo "nest not found"
+RUN ./node_modules/.bin/nest build
+RUN ls -la dist/ || echo "dist not found"
 
 # Remover devDependencies para produção
 RUN npm prune --production
