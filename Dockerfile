@@ -33,8 +33,9 @@ CMD ["npm", "run", "start:dev"]
 # ============================================
 FROM base AS build
 
-# Instalar todas as dependências para build
-RUN npm ci
+# Forçar instalação de todas as dependências (incluindo devDependencies)
+ENV NODE_ENV=development
+RUN npm ci --include=dev
 
 # Copiar código fonte
 COPY . .
@@ -42,7 +43,7 @@ COPY . .
 # Build da aplicação
 RUN npm run build
 
-# Remover devDependencies
+# Remover devDependencies para produção
 RUN npm prune --production
 
 # ============================================
