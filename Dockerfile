@@ -1,75 +1,38 @@
+﻿# ============================================
+# Game Provider API - Production Dockerfile
 # ============================================
-# Stage 1: Base
-# ============================================
-FROM node:20-alpine AS base
-
-WORKDIR /app
-
-# Instalar dependências do sistema
-RUN apk add --no-cache dumb-init
-
-# Copiar arquivos de dependências
-COPY package*.json ./
-
-# ============================================
-# Stage 2: Development
-# ============================================
-FROM base AS development
-
-# Instalar todas as dependências (incluindo devDependencies)
-RUN npm ci
-
-# Copiar código fonte
-COPY . .
-
-# Expor porta
-EXPOSE 3000
-
-# Comando para desenvolvimento com hot reload
-CMD ["npm", "run", "start:dev"]
-
-# ============================================
-# Stage 3: Build
-# ============================================
-FROM base AS build
-
-# IMPORTANTE: Ignorar NODE_ENV passado pelo Coolify para garantir devDependencies
-# Unset NODE_ENV e forçar instalação completa
-ARG NODE_ENV
-RUN unset NODE_ENV && npm ci
-
-# Copiar código fonte
-COPY . .
-
-# Build da aplicação - verificar que nest está disponível
-RUN ls -la node_modules/.bin/ | grep nest || echo "nest not found"
-RUN ./node_modules/.bin/nest build
-RUN ls -la dist/ || echo "dist not found"
-
-# Remover devDependencies para produção
-RUN npm prune --production
-
-# ============================================
-# Stage 4: Production
-# ============================================
-FROM node:20-alpine AS production
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Instalar dumb-init para gerenciamento de processos
 RUN apk add --no-cache dumb-init
 
-# Criar usuário não-root para segurança
+# Copiar arquivos de dependências
+COPY package*.json ./
+
+# CRITICO: Instalar TODAS as dependencias (dev + prod) para build
+# Ignorar qualquer NODE_ENV que venha do ambiente externo
+RUN npm ci --include=dev
+
+# Copiar codigo fonte
+COPY . .
+
+# Build da aplicacao NestJS
+RUN npm run build
+
+# Verificar que o build foi criado
+RUN ls -la dist/ && ls -la dist/main.js
+
+# Remover devDependencies apos o build para reduzir tamanho da imagem
+RUN npm prune --omit=dev
+
+# Criar usuario nao-root para seguranca
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+    adduser -S nestjs -u 1001 && \
+    chown -R nestjs:nodejs /app
 
-# Copiar arquivos necessários do stage de build
-COPY --from=build --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=build --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
-COPY --from=build --chown=nestjs:nodejs /app/public ./public
-
-# Usar usuário não-root
+# Usar usuario nao-root
 USER nestjs
 
 # Expor porta
@@ -82,5 +45,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Usar dumb-init para gerenciar sinais corretamente
 ENTRYPOINT ["dumb-init", "--"]
 
-# Comando para produção
+# Variaveis de ambiente padrao
+ENV NODE_ENV=production
+ENV PORT=3006
+
+# Comando para producao
 CMD ["node", "dist/main.js"]
