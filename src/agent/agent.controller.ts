@@ -69,6 +69,37 @@ export class AgentController {
     return { success: true, data: agent };
   }
 
+  @Put('profile')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Atualizar Perfil do Agente',
+    description: 'Atualiza dados do agente autenticado (webhooks, etc).'
+  })
+  async updateProfile(
+    @Headers('authorization') authHeader: string,
+    @Body() body: {
+      webhookUrl?: string;
+      balanceCallbackUrl?: string;
+      debitCallbackUrl?: string;
+      creditCallbackUrl?: string;
+    },
+  ) {
+    const accessToken = this.extractBearerToken(authHeader);
+    const { operatorId } = await this.agentService.validateToken(accessToken);
+    
+    const agent = await this.agentService.updateAgent(operatorId, {
+      webhookUrl: body.webhookUrl,
+      balanceCallbackUrl: body.balanceCallbackUrl,
+      debitCallbackUrl: body.debitCallbackUrl,
+      creditCallbackUrl: body.creditCallbackUrl,
+    });
+    
+    if (!agent) throw new NotFoundException('Agent not found');
+    
+    this.logger.log(`[Agent] Profile updated for ${agent.name}`);
+    return { success: true, data: agent };
+  }
+
   @Get('transactions')
   @ApiBearerAuth()
   @ApiOperation({

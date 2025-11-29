@@ -12,6 +12,10 @@ interface Agent {
   balance: number;
   apiKey: string;
   apiSecret: string;
+  webhookUrl?: string;
+  balanceCallbackUrl?: string;
+  debitCallbackUrl?: string;
+  creditCallbackUrl?: string;
 }
 
 export default function IntegrationPage() {
@@ -19,6 +23,14 @@ export default function IntegrationPage() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [showSecret, setShowSecret] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  
+  // Webhook states
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [balanceCallbackUrl, setBalanceCallbackUrl] = useState('');
+  const [debitCallbackUrl, setDebitCallbackUrl] = useState('');
+  const [creditCallbackUrl, setCreditCallbackUrl] = useState('');
+  const [savingWebhook, setSavingWebhook] = useState(false);
+  const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('agentToken');
@@ -29,8 +41,84 @@ export default function IntegrationPage() {
       return;
     }
 
-    setAgent(JSON.parse(agentData));
+    const parsedAgent = JSON.parse(agentData);
+    setAgent(parsedAgent);
+    
+    // Load webhook URLs from agent data
+    setWebhookUrl(parsedAgent.webhookUrl || '');
+    setBalanceCallbackUrl(parsedAgent.balanceCallbackUrl || '');
+    setDebitCallbackUrl(parsedAgent.debitCallbackUrl || '');
+    setCreditCallbackUrl(parsedAgent.creditCallbackUrl || '');
+    
+    // Also fetch fresh data from API
+    fetchAgentData(token);
   }, [router]);
+
+  async function fetchAgentData(token: string) {
+    try {
+      const response = await fetch(`${API_BASE}/agent/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAgent(data.data);
+          setWebhookUrl(data.data.webhookUrl || '');
+          setBalanceCallbackUrl(data.data.balanceCallbackUrl || '');
+          setDebitCallbackUrl(data.data.debitCallbackUrl || '');
+          setCreditCallbackUrl(data.data.creditCallbackUrl || '');
+          // Update localStorage
+          localStorage.setItem('agentData', JSON.stringify(data.data));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch agent data:', error);
+    }
+  }
+
+  async function handleSaveWebhooks() {
+    const token = localStorage.getItem('agentToken');
+    if (!token || !agent) return;
+
+    setSavingWebhook(true);
+    setWebhookMessage(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/agent/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          webhookUrl: webhookUrl || null,
+          balanceCallbackUrl: balanceCallbackUrl || null,
+          debitCallbackUrl: debitCallbackUrl || null,
+          creditCallbackUrl: creditCallbackUrl || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setWebhookMessage({ type: 'success', text: 'Webhooks salvos com sucesso!' });
+        // Update local state
+        const updatedAgent = { ...agent, webhookUrl, balanceCallbackUrl, debitCallbackUrl, creditCallbackUrl };
+        setAgent(updatedAgent);
+        localStorage.setItem('agentData', JSON.stringify(updatedAgent));
+      } else {
+        setWebhookMessage({ type: 'error', text: data.message || 'Erro ao salvar webhooks' });
+      }
+    } catch (error) {
+      console.error('Failed to save webhooks:', error);
+      setWebhookMessage({ type: 'error', text: 'Erro de conexão. Tente novamente.' });
+    } finally {
+      setSavingWebhook(false);
+    }
+  }
 
   function handleLogout() {
     localStorage.removeItem('agentToken');
@@ -295,30 +383,90 @@ Content-Type: application/json
         {/* Webhook Configuration */}
         <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
           <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <span>🔔</span> Configuração de Webhook (Opcional)
+            <span>🔔</span> Configuração de Webhooks
           </h3>
           <p className="text-sm text-slate-400 mb-4">
-            Configure um endpoint na sua bet para receber notificações em tempo real sobre eventos do jogo.
+            Configure os endpoints da sua bet para receber notificações em tempo real sobre eventos do jogo.
           </p>
 
           <div className="space-y-4">
+            {/* Balance Callback URL */}
             <div>
-              <label className="block text-sm text-slate-400 mb-2">URL do Webhook</label>
+              <label className="block text-sm text-slate-400 mb-2">URL de Consulta de Saldo</label>
               <input
                 type="url"
-                placeholder="https://suabet.com/api/webhook/games"
+                value={balanceCallbackUrl}
+                onChange={(e) => setBalanceCallbackUrl(e.target.value)}
+                placeholder="https://suabet.com/api/webhooks/game-provider/balance"
                 className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
               />
+              <p className="text-xs text-slate-500 mt-1">POST - Chamado para consultar saldo do jogador</p>
+            </div>
+
+            {/* Debit Callback URL */}
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">URL de Débito (Aposta)</label>
+              <input
+                type="url"
+                value={debitCallbackUrl}
+                onChange={(e) => setDebitCallbackUrl(e.target.value)}
+                placeholder="https://suabet.com/api/webhooks/game-provider/debit"
+                className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              />
+              <p className="text-xs text-slate-500 mt-1">POST - Chamado quando jogador faz uma aposta</p>
+            </div>
+
+            {/* Credit Callback URL */}
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">URL de Crédito (Ganho)</label>
+              <input
+                type="url"
+                value={creditCallbackUrl}
+                onChange={(e) => setCreditCallbackUrl(e.target.value)}
+                placeholder="https://suabet.com/api/webhooks/game-provider/credit"
+                className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              />
+              <p className="text-xs text-slate-500 mt-1">POST - Chamado quando jogador ganha</p>
+            </div>
+
+            {/* General Webhook URL (optional) */}
+            <div>
+              <label className="block text-sm text-slate-400 mb-2">URL de Eventos Gerais (Opcional)</label>
+              <input
+                type="url"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://suabet.com/api/webhooks/game-provider/events"
+                className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              />
+              <p className="text-xs text-slate-500 mt-1">POST - Recebe todos os eventos (game.start, game.end, etc)</p>
             </div>
 
             <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-500/50">
               <p className="text-sm text-blue-300">
-                <strong>ℹ️ Eventos disponíveis:</strong> game.start, game.spin, game.win, game.bonus, game.end
+                <strong>ℹ️ Importante:</strong> Configure pelo menos balance, debit e credit para que o saldo do jogador atualize em tempo real na sua bet.
               </p>
             </div>
 
-            <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition">
-              💾 Salvar Webhook
+            {/* Message */}
+            {webhookMessage && (
+              <div className={`p-3 rounded-lg border ${
+                webhookMessage.type === 'success' 
+                  ? 'bg-emerald-500/20 border-emerald-500/50' 
+                  : 'bg-red-500/20 border-red-500/50'
+              }`}>
+                <p className={`text-sm ${webhookMessage.type === 'success' ? 'text-emerald-300' : 'text-red-300'}`}>
+                  {webhookMessage.type === 'success' ? '✅' : '❌'} {webhookMessage.text}
+                </p>
+              </div>
+            )}
+
+            <button 
+              onClick={handleSaveWebhooks}
+              disabled={savingWebhook}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingWebhook ? '⏳ Salvando...' : '💾 Salvar Webhooks'}
             </button>
           </div>
         </div>
