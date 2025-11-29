@@ -168,7 +168,7 @@ export class AgentService {
       { id: '1', gameCode: 'fortunetiger', gameName: 'Fortune Tiger', provider: 'PGSoft', rtp: 96.81, volatility: 'medium', isActive: true },
       { id: '2', gameCode: 'fortuneox', gameName: 'Fortune Ox', provider: 'PGSoft', rtp: 96.75, volatility: 'medium', isActive: true },
       { id: '3', gameCode: 'fortunerabbit', gameName: 'Fortune Rabbit', provider: 'PGSoft', rtp: 96.71, volatility: 'medium', isActive: true },
-      { id: '4', gameCode: 'fortunedragon', gameName: 'Fortune Dragon', provider: 'PGSoft', rtp: 96.78, volatility: 'high', isActive: true },
+      { id: '4', gameCode: 'fortunepanda', gameName: 'Fortune Panda', provider: 'PGSoft', rtp: 96.50, volatility: 'medium', isActive: true },
       { id: '5', gameCode: 'fortunemouse', gameName: 'Fortune Mouse', provider: 'PGSoft', rtp: 96.82, volatility: 'low', isActive: true },
       { id: '6', gameCode: 'bikiniparadise', gameName: 'Bikini Paradise', provider: 'PGSoft', rtp: 96.88, volatility: 'medium', isActive: true },
       { id: '7', gameCode: 'hoodvswoolf', gameName: 'Hood vs Wolf', provider: 'PGSoft', rtp: 96.50, volatility: 'high', isActive: true },
