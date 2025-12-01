@@ -312,20 +312,23 @@ export class GamesController {
     this.logger.log(`[SPIN] === REQUISIÇÃO DO JOGO ===`);
     this.logger.log(`[SPIN] body: betamount="${body.betamount}", numline="${body.numline}" (ignorado), cpl="${body.cpl}"`);
     this.logger.log(`[SPIN] Usando numLines da config: ${numLines} (jogo enviou: ${numLinesFromGame})`);
-    this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}`);
+    this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
-    // VALIDAÇÃO CRÍTICA: Verifica saldo ANTES de qualquer operação
-    const currentCachedBalance = Number(session.cachedBalance);
-    if (currentCachedBalance < totalBet) {
-      this.logger.warn(`[SPIN] BLOQUEADO - Saldo insuficiente: ${currentCachedBalance} < ${totalBet}`);
-      return res.status(200).json({
-        success: false,
-        message: 'Saldo insuficiente',
-        data: {
-          credit: currentCachedBalance,
-          required: totalBet,
-        }
-      });
+    // VALIDAÇÃO DE SALDO: Só valida cache no modo LOCAL
+    // No modo REMOTE, o webhook de debit fará a validação real
+    if (!useRemoteWebhooks) {
+      const currentCachedBalance = Number(session.cachedBalance);
+      if (currentCachedBalance < totalBet) {
+        this.logger.warn(`[SPIN] BLOQUEADO - Saldo insuficiente (LOCAL): ${currentCachedBalance} < ${totalBet}`);
+        return res.status(200).json({
+          success: false,
+          message: 'Saldo insuficiente',
+          data: {
+            credit: currentCachedBalance,
+            required: totalBet,
+          }
+        });
+      }
     }
 
     // 1. Cria Round (Pendente)
