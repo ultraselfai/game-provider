@@ -11,6 +11,7 @@ import { GameRound, RoundStatus } from '../database/entities/game-round.entity';
 import { Transaction, TransactionType, TransactionStatus } from '../database/entities/transaction.entity';
 import { Agent } from '../database/entities/agent.entity';
 import { AgentTransaction, AgentTransactionType } from '../database/entities/agent-transaction.entity';
+import { AgentGameSettings } from '../database/entities/agent-game-settings.entity';
 import { WebhookService } from '../webhook/webhook.service';
 import { GameSettingsService } from '../admin/game-settings.service';
 
@@ -38,6 +39,8 @@ export class GamesController {
     private readonly agentRepository: Repository<Agent>,
     @InjectRepository(AgentTransaction)
     private readonly agentTransactionRepository: Repository<AgentTransaction>,
+    @InjectRepository(AgentGameSettings)
+    private readonly agentGameSettingsRepository: Repository<AgentGameSettings>,
   ) {}
 
   /**
@@ -46,6 +49,38 @@ export class GamesController {
    */
   private hasRemoteWebhooks(agent: Agent | null): boolean {
     return !!(agent?.debitCallbackUrl && agent?.creditCallbackUrl);
+  }
+
+  /**
+   * Busca configurações efetivas do jogo para um agente específico
+   * Prioridade: AgentGameSettings > GameSettings (global) > Config estático
+   */
+  private async getAgentEffectiveConfig(agentId: string | undefined, gameCode: string): Promise<{
+    rtp: number;
+    winChance: number;
+  }> {
+    // Se tem agentId, busca config customizada primeiro
+    if (agentId) {
+      const agentSetting = await this.agentGameSettingsRepository.findOne({
+        where: { agentId, gameCode, isCustomized: true },
+      });
+
+      if (agentSetting) {
+        this.logger.log(`[CONFIG] Using AGENT custom settings for ${gameCode}: RTP=${agentSetting.rtp}%, WinChance=${agentSetting.winChance}%`);
+        return {
+          rtp: Number(agentSetting.rtp),
+          winChance: agentSetting.winChance,
+        };
+      }
+    }
+
+    // Fallback para configuração global
+    const globalSettings = await this.gameSettingsService.getEffectiveConfig(gameCode);
+    this.logger.log(`[CONFIG] Using GLOBAL settings for ${gameCode}: RTP=${globalSettings.rtp}%, WinChance=${globalSettings.winChance}%`);
+    return {
+      rtp: globalSettings.rtp,
+      winChance: globalSettings.winChance,
+    };
   }
 
   /**
@@ -422,14 +457,14 @@ export class GamesController {
       currentBalance = Number(session.cachedBalance);
     }
 
-    // 3. Busca configurações dinâmicas do DB (RTP, winChance, etc.)
-    const dynamicSettings = await this.gameSettingsService.getEffectiveConfig(session.gameCode);
-    this.logger.log(`[SPIN] Dynamic config - winChance: ${dynamicSettings.winChance}%, rtp: ${dynamicSettings.rtp}%`);
+    // 3. Busca configurações dinâmicas - PRIORIZA config do AGENTE
+    const agentConfig = await this.getAgentEffectiveConfig(session.agent?.id, session.gameCode);
+    this.logger.log(`[SPIN] Effective config for agent ${session.agent?.name || 'unknown'} - RTP: ${agentConfig.rtp}%, WinChance: ${agentConfig.winChance}%`);
 
-    // 4. Executa Lógica do Jogo COM configurações dinâmicas
+    // 4. Executa Lógica do Jogo COM configurações do agente
     const spinResult = this.slotEngine.spinPredefined(config, betAmount, cpl, {
-      rtp: dynamicSettings.rtp,
-      winChance: dynamicSettings.winChance,
+      rtp: agentConfig.rtp,
+      winChance: agentConfig.winChance,
     });
 
     // 5. Atualiza Round com resultado

@@ -127,6 +127,58 @@ export class AgentController {
   }
 
   // =============================================
+  // CONFIGURAÇÕES DE JOGOS DO AGENTE
+  // =============================================
+
+  @Get('games/settings')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Configurações dos Jogos do Agente',
+    description: 'Retorna as configurações de RTP e Chance de Vitória de cada jogo permitido para o agente.'
+  })
+  async getGameSettings(@Headers('authorization') authHeader: string) {
+    const accessToken = this.extractBearerToken(authHeader);
+    const { operatorId } = await this.agentService.validateToken(accessToken);
+    const settings = await this.agentService.getAgentGameSettings(operatorId);
+    return { success: true, data: settings };
+  }
+
+  @Put('games/:gameCode/settings')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Atualizar Configurações de um Jogo',
+    description: 'Permite ao agente customizar o RTP e Chance de Vitória de um jogo específico. RTP: 85-99%, WinChance: 10-60%.'
+  })
+  async updateGameSettings(
+    @Headers('authorization') authHeader: string,
+    @Param('gameCode') gameCode: string,
+    @Body() body: { rtp?: number; winChance?: number },
+  ) {
+    const accessToken = this.extractBearerToken(authHeader);
+    const { operatorId } = await this.agentService.validateToken(accessToken);
+    const settings = await this.agentService.updateAgentGameSettings(operatorId, gameCode, body);
+    this.logger.log(`[Agent] Game settings updated: ${gameCode} - RTP: ${settings.rtp}%, WinChance: ${settings.winChance}%`);
+    return { success: true, data: settings };
+  }
+
+  @Post('games/:gameCode/settings/reset')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Resetar Configurações de um Jogo',
+    description: 'Remove as customizações do agente para um jogo específico, voltando aos valores globais.'
+  })
+  async resetGameSettings(
+    @Headers('authorization') authHeader: string,
+    @Param('gameCode') gameCode: string,
+  ) {
+    const accessToken = this.extractBearerToken(authHeader);
+    const { operatorId } = await this.agentService.validateToken(accessToken);
+    await this.agentService.resetAgentGameSettings(operatorId, gameCode);
+    return { success: true, message: `Settings for ${gameCode} reset to global defaults` };
+  }
+
+  // =============================================
   // SESSÕES DE JOGO
   // =============================================
 

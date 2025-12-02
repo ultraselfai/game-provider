@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { Agent, AgentTransaction, AgentTransactionType, GameSession, SessionStatus } from '../database/entities';
+import { Agent, AgentTransaction, AgentTransactionType, AgentGameSettings, GameSession, SessionStatus, GameSettings } from '../database/entities';
 import { RedisService } from '../redis';
 import { AgentAuthDto, CreateSessionDto, AuthResponse, SessionResponse, GameMode } from './dto/agent.dto';
 
@@ -18,8 +18,12 @@ export class AgentService {
     private readonly agentRepo: Repository<Agent>,
     @InjectRepository(AgentTransaction)
     private readonly agentTransactionRepo: Repository<AgentTransaction>,
+    @InjectRepository(AgentGameSettings)
+    private readonly agentGameSettingsRepo: Repository<AgentGameSettings>,
     @InjectRepository(GameSession)
     private readonly sessionRepo: Repository<GameSession>,
+    @InjectRepository(GameSettings)
+    private readonly gameSettingsRepo: Repository<GameSettings>,
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
   ) {}
@@ -596,6 +600,174 @@ export class AgentService {
     this.logger.log(`[AGENT] Regenerated API key for agent: ${agent.name}`);
 
     return { apiKey, apiSecret };
+  }
+
+  // =============================================
+  // CONFIGURAÇÕES DE JOGOS DO AGENTE
+  // =============================================
+
+  /**
+   * Lista configurações de jogos do agente com valores customizados ou globais
+   */
+  async getAgentGameSettings(agentId: string): Promise<Array<{
+    gameCode: string;
+    gameName: string;
+    rtp: number;
+    winChance: number;
+    isCustomized: boolean;
+    globalRtp: number;
+    globalWinChance: number;
+  }>> {
+    // Busca jogos permitidos do agente
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    // Busca todas as configurações globais de jogos
+    const globalSettings = await this.gameSettingsRepo.find();
+    
+    // Busca configurações customizadas do agente
+    const agentSettings = await this.agentGameSettingsRepo.find({
+      where: { agentId },
+    });
+
+    // Monta mapa de configurações do agente
+    const agentSettingsMap = new Map(
+      agentSettings.map(s => [s.gameCode, s])
+    );
+
+    // Filtra apenas jogos permitidos para o agente
+    const allowedGames = agent.allowedGames || [];
+    
+    return globalSettings
+      .filter(g => allowedGames.includes(g.gameCode))
+      .map(global => {
+        const custom = agentSettingsMap.get(global.gameCode);
+        return {
+          gameCode: global.gameCode,
+          gameName: global.gameName,
+          rtp: custom?.isCustomized ? Number(custom.rtp) : Number(global.rtp),
+          winChance: custom?.isCustomized ? custom.winChance : global.winChance,
+          isCustomized: custom?.isCustomized || false,
+          globalRtp: Number(global.rtp),
+          globalWinChance: global.winChance,
+        };
+      });
+  }
+
+  /**
+   * Atualiza configurações de um jogo específico para o agente
+   */
+  async updateAgentGameSettings(
+    agentId: string,
+    gameCode: string,
+    updates: { rtp?: number; winChance?: number }
+  ): Promise<{
+    gameCode: string;
+    rtp: number;
+    winChance: number;
+    isCustomized: boolean;
+  }> {
+    // Validar agente
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    // Validar se o jogo está permitido para o agente
+    if (!agent.allowedGames?.includes(gameCode)) {
+      throw new BadRequestException(`Game ${gameCode} is not allowed for this agent`);
+    }
+
+    // Validar RTP (85-99%)
+    if (updates.rtp !== undefined && (updates.rtp < 85 || updates.rtp > 99)) {
+      throw new BadRequestException('RTP must be between 85% and 99%');
+    }
+
+    // Validar winChance (10-60%)
+    if (updates.winChance !== undefined && (updates.winChance < 10 || updates.winChance > 60)) {
+      throw new BadRequestException('Win chance must be between 10% and 60%');
+    }
+
+    // Busca ou cria configuração do agente
+    let agentSetting = await this.agentGameSettingsRepo.findOne({
+      where: { agentId, gameCode },
+    });
+
+    // Busca configuração global para defaults
+    const globalSetting = await this.gameSettingsRepo.findOne({
+      where: { gameCode },
+    });
+
+    if (!agentSetting) {
+      agentSetting = this.agentGameSettingsRepo.create({
+        agentId,
+        gameCode,
+        rtp: updates.rtp ?? globalSetting?.rtp ?? 96.5,
+        winChance: updates.winChance ?? globalSetting?.winChance ?? 35,
+        isCustomized: true,
+      });
+    } else {
+      if (updates.rtp !== undefined) agentSetting.rtp = updates.rtp;
+      if (updates.winChance !== undefined) agentSetting.winChance = updates.winChance;
+      agentSetting.isCustomized = true;
+    }
+
+    await this.agentGameSettingsRepo.save(agentSetting);
+
+    this.logger.log(`[AGENT] Updated game settings for ${agent.name}: ${gameCode} - RTP: ${agentSetting.rtp}%, WinChance: ${agentSetting.winChance}%`);
+
+    return {
+      gameCode: agentSetting.gameCode,
+      rtp: Number(agentSetting.rtp),
+      winChance: agentSetting.winChance,
+      isCustomized: agentSetting.isCustomized,
+    };
+  }
+
+  /**
+   * Reseta configurações de um jogo para os valores globais
+   */
+  async resetAgentGameSettings(agentId: string, gameCode: string): Promise<void> {
+    await this.agentGameSettingsRepo.delete({ agentId, gameCode });
+    this.logger.log(`[AGENT] Reset game settings for agent ${agentId}: ${gameCode}`);
+  }
+
+  /**
+   * Obtém configuração efetiva de um jogo para um agente
+   * Prioridade: AgentGameSettings > GameSettings (global) > Default
+   */
+  async getEffectiveGameConfig(agentId: string, gameCode: string): Promise<{
+    rtp: number;
+    winChance: number;
+  }> {
+    // Primeiro tenta configuração customizada do agente
+    const agentSetting = await this.agentGameSettingsRepo.findOne({
+      where: { agentId, gameCode, isCustomized: true },
+    });
+
+    if (agentSetting) {
+      return {
+        rtp: Number(agentSetting.rtp),
+        winChance: agentSetting.winChance,
+      };
+    }
+
+    // Fallback para configuração global
+    const globalSetting = await this.gameSettingsRepo.findOne({
+      where: { gameCode },
+    });
+
+    if (globalSetting) {
+      return {
+        rtp: Number(globalSetting.rtp),
+        winChance: globalSetting.winChance,
+      };
+    }
+
+    // Default
+    return { rtp: 96.5, winChance: 35 };
   }
 
   // =============================================

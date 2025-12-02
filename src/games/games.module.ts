@@ -6,6 +6,7 @@ import { GameRound } from '../database/entities/game-round.entity';
 import { Transaction } from '../database/entities/transaction.entity';
 import { Agent } from '../database/entities/agent.entity';
 import { AgentTransaction } from '../database/entities/agent-transaction.entity';
+import { AgentGameSettings } from '../database/entities/agent-game-settings.entity';
 import { GameSettings } from '../database/entities/game-settings.entity';
 import { SlotEngine } from '../engine/slot-engine';
 import { RngService } from '../engine/rng.service';
@@ -14,7 +15,7 @@ import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([GameSession, GameRound, Transaction, Agent, AgentTransaction, GameSettings]),
+    TypeOrmModule.forFeature([GameSession, GameRound, Transaction, Agent, AgentTransaction, AgentGameSettings, GameSettings]),
     WebhookModule,
     AdminModule, // Para usar GameSettingsService
   ],
