@@ -10,6 +10,7 @@ interface Agent {
   name: string;
   email: string;
   balance: number;
+  spinCredits: number;
 }
 
 interface Game {
@@ -127,11 +128,11 @@ export default function GamesPage() {
             </div>
 
             <div className="flex items-center gap-2 bg-slate-700/50 rounded-xl px-6 py-3 border border-slate-600">
-              <span className="text-2xl">💰</span>
+              <span className="text-2xl">🎰</span>
               <div className="text-right">
-                <p className="text-xs text-slate-400">Saldo Disponível</p>
-                <p className={`text-2xl font-bold ${Number(agent?.balance) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  R$ {Number(agent?.balance || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="text-xs text-slate-400">Créditos de Spin</p>
+                <p className={`text-2xl font-bold ${Number(agent?.spinCredits) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {Number(agent?.spinCredits || 0).toLocaleString('pt-BR')} créditos
                 </p>
               </div>
             </div>
