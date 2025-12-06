@@ -145,16 +145,12 @@ export default function GamesPage() {
             <p className="text-2xl font-bold text-emerald-400">{games.filter(g => g.isActive).length}</p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-            <p className="text-sm text-slate-400">RTP Médio</p>
-            <p className="text-2xl font-bold text-blue-400">
-              {games.length > 0 ? (games.reduce((acc, g) => acc + Number(g.rtp), 0) / games.length).toFixed(1) : 0}%
-            </p>
+            <p className="text-sm text-slate-400">Com Free Spin</p>
+            <p className="text-2xl font-bold text-purple-400">{games.filter(g => g.hasFreeSpin).length}</p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-            <p className="text-sm text-slate-400">Win Chance Médio</p>
-            <p className="text-2xl font-bold text-purple-400">
-              {games.length > 0 ? (games.reduce((acc, g) => acc + g.winChance, 0) / games.length).toFixed(0) : 0}%
-            </p>
+            <p className="text-sm text-slate-400">Com Jackpot</p>
+            <p className="text-2xl font-bold text-amber-400">{games.filter(g => g.hasJackpot).length}</p>
           </div>
         </div>
 
@@ -198,11 +194,6 @@ export default function GamesPage() {
                       {game.gameCode}
                     </code>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400">RTP</span>
-                    <span className="text-blue-400 font-medium">{Number(game.rtp).toFixed(1)}%</span>
-                  </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Volatilidade</span>
@@ -219,8 +210,8 @@ export default function GamesPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-400">Win Chance</span>
-                    <span className="text-green-400 font-medium">{game.winChance}%</span>
+                    <span className="text-sm text-slate-400">Aposta Padrão</span>
+                    <span className="text-emerald-400 font-medium">R$ {Number(game.defaultBet).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -265,11 +256,9 @@ function EditGameModal({
   onSave: (gameCode: string, updates: Partial<GameSettings>) => Promise<boolean>;
   saving: boolean;
 }) {
-  const [rtp, setRtp] = useState(Number(game.rtp));
   const [minBet, setMinBet] = useState(Number(game.minBet));
   const [maxBet, setMaxBet] = useState(Number(game.maxBet));
   const [defaultBet, setDefaultBet] = useState(Number(game.defaultBet));
-  const [winChance, setWinChance] = useState(game.winChance);
   const [volatility, setVolatility] = useState(game.volatility);
   const [betSizesText, setBetSizesText] = useState((game.betSizes || []).join(', '));
 
@@ -277,12 +266,9 @@ function EditGameModal({
     const betSizes = betSizesText.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     
     const updates: Partial<GameSettings> = {
-      rtp,
       minBet,
       maxBet,
       defaultBet,
-      winChance,
-      loseChance: 100 - winChance,
       volatility,
       betSizes,
     };
@@ -301,58 +287,12 @@ function EditGameModal({
         </div>
 
         <div className="space-y-5">
-          {/* RTP */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">RTP (Return to Player)</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="99.99"
-                step="0.1"
-                value={rtp}
-                onChange={(e) => setRtp(parseFloat(e.target.value))}
-                className="flex-1 accent-blue-500"
-              />
-              <input
-                type="number"
-                min="0"
-                max="99.99"
-                step="0.1"
-                value={rtp}
-                onChange={(e) => setRtp(parseFloat(e.target.value) || 0)}
-                className="w-24 rounded-lg bg-slate-700 border border-slate-600 px-3 py-2 text-white text-center"
-              />
-              <span className="text-slate-400">%</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Retorno ao jogador (96% = padrão da indústria)</p>
-          </div>
-
-          {/* Win Chance */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-2">Chance de Vitória</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={winChance}
-                onChange={(e) => setWinChance(parseInt(e.target.value))}
-                className="flex-1 accent-green-500"
-              />
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={winChance}
-                onChange={(e) => setWinChance(parseInt(e.target.value) || 0)}
-                className="w-24 rounded-lg bg-slate-700 border border-slate-600 px-3 py-2 text-white text-center"
-              />
-              <span className="text-slate-400">%</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Frequência de vitórias (0% = nunca, 100% = sempre)</p>
+          {/* Info sobre RTP/WinChance */}
+          <div className="p-3 rounded-lg bg-purple-500/20 border border-purple-500/50">
+            <p className="text-sm text-purple-300">
+              ℹ️ <strong>RTP e Chance de Vitória</strong> são configurados por cada <strong>Agente</strong> no painel deles.
+              Aqui você configura apenas as regras de apostas.
+            </p>
           </div>
 
           {/* Volatility */}

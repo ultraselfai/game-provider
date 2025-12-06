@@ -53,33 +53,43 @@ export class GamesController {
 
   /**
    * Busca configurações efetivas do jogo para um agente específico
-   * Prioridade: AgentGameSettings > GameSettings (global) > Config estático
+   * SEMPRE usa a configuração do agente - cria uma padrão se não existir
+   * RTP e WinChance são exclusivamente configurados pelo agente
    */
   private async getAgentEffectiveConfig(agentId: string | undefined, gameCode: string): Promise<{
     rtp: number;
     winChance: number;
   }> {
-    // Se tem agentId, busca config customizada primeiro
-    if (agentId) {
-      const agentSetting = await this.agentGameSettingsRepository.findOne({
-        where: { agentId, gameCode, isCustomized: true },
-      });
-
-      if (agentSetting) {
-        this.logger.log(`[CONFIG] Using AGENT custom settings for ${gameCode}: RTP=${agentSetting.rtp}%, WinChance=${agentSetting.winChance}%`);
-        return {
-          rtp: Number(agentSetting.rtp),
-          winChance: agentSetting.winChance,
-        };
-      }
+    // Valores padrão caso não tenha agentId
+    const defaultConfig = { rtp: 96.5, winChance: 35 };
+    
+    if (!agentId) {
+      this.logger.log(`[CONFIG] No agent ID, using defaults for ${gameCode}: RTP=${defaultConfig.rtp}%, WinChance=${defaultConfig.winChance}%`);
+      return defaultConfig;
     }
 
-    // Fallback para configuração global
-    const globalSettings = await this.gameSettingsService.getEffectiveConfig(gameCode);
-    this.logger.log(`[CONFIG] Using GLOBAL settings for ${gameCode}: RTP=${globalSettings.rtp}%, WinChance=${globalSettings.winChance}%`);
+    // Busca config do agente
+    let agentSetting = await this.agentGameSettingsRepository.findOne({
+      where: { agentId, gameCode },
+    });
+
+    // Se não existe, cria uma config padrão para o agente
+    if (!agentSetting) {
+      this.logger.log(`[CONFIG] Creating default settings for agent ${agentId}, game ${gameCode}`);
+      agentSetting = this.agentGameSettingsRepository.create({
+        agentId,
+        gameCode,
+        rtp: defaultConfig.rtp,
+        winChance: defaultConfig.winChance,
+        isCustomized: false, // Indica que está usando valores padrão
+      });
+      await this.agentGameSettingsRepository.save(agentSetting);
+    }
+
+    this.logger.log(`[CONFIG] Using AGENT settings for ${gameCode}: RTP=${agentSetting.rtp}%, WinChance=${agentSetting.winChance}%`);
     return {
-      rtp: globalSettings.rtp,
-      winChance: globalSettings.winChance,
+      rtp: Number(agentSetting.rtp),
+      winChance: agentSetting.winChance,
     };
   }
 

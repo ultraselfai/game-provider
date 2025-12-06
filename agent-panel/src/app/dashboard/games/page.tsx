@@ -19,9 +19,11 @@ interface GameSettings {
   rtp: number;
   winChance: number;
   isCustomized: boolean;
-  globalRtp: number;
-  globalWinChance: number;
 }
+
+// Valores padrão do sistema
+const DEFAULT_RTP = 96.5;
+const DEFAULT_WIN_CHANCE = 35;
 
 // Icons para cada jogo
 const gameIcons: Record<string, string> = {
@@ -161,11 +163,11 @@ export default function GamesPage() {
 
       if (res.ok && data.success) {
         setMessage({ type: 'success', text: 'Configurações resetadas para o padrão!' });
-        setEditRtp(selectedGame.globalRtp);
-        setEditWinChance(selectedGame.globalWinChance);
+        setEditRtp(DEFAULT_RTP);
+        setEditWinChance(DEFAULT_WIN_CHANCE);
         setGames(prev => prev.map(g => 
           g.gameCode === selectedGame.gameCode 
-            ? { ...g, rtp: g.globalRtp, winChance: g.globalWinChance, isCustomized: false }
+            ? { ...g, rtp: DEFAULT_RTP, winChance: DEFAULT_WIN_CHANCE, isCustomized: false }
             : g
         ));
         setTimeout(() => setShowModal(false), 1500);
@@ -364,14 +366,92 @@ export default function GamesPage() {
                 </div>
               </div>
 
-              {/* Default values */}
-              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <p className="text-xs text-slate-400 mb-2">Valores padrão do sistema:</p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-300">RTP: {selectedGame.globalRtp.toFixed(1)}%</span>
-                  <span className="text-slate-300">Vitória: {selectedGame.globalWinChance}%</span>
-                </div>
-              </div>
+              {/* Calculadora de Receita */}
+              {(() => {
+                const depositoExemplo = 100;
+                const houseEdge = 100 - editRtp; // Ex: RTP 90% = 10% house edge
+                const lucroTeorico = depositoExemplo * (houseEdge / 100);
+                
+                // Fator de engajamento: winChance afeta quanto do depósito é "jogado"
+                // Baseline: 35% winChance = 100% do depósito jogado
+                // WinChance baixo = jogador desiste antes, menos receita efetiva
+                // WinChance alto = jogador joga mais, mais receita (até certo ponto)
+                const baselineWinChance = 35;
+                const engajamento = Math.min(1.2, Math.max(0.5, editWinChance / baselineWinChance));
+                const lucroEstimado = lucroTeorico * engajamento;
+                
+                // Indicadores
+                const isLucrativo = lucroEstimado >= 8;
+                const isEquilibrado = lucroEstimado >= 5 && lucroEstimado < 8;
+                const isArriscado = lucroEstimado < 5;
+                
+                // Cor baseada no lucro
+                const corLucro = lucroEstimado >= 10 ? 'text-emerald-400' : 
+                                 lucroEstimado >= 7 ? 'text-green-400' :
+                                 lucroEstimado >= 5 ? 'text-yellow-400' :
+                                 lucroEstimado >= 3 ? 'text-orange-400' : 'text-red-400';
+                
+                const bgLucro = lucroEstimado >= 10 ? 'from-emerald-600/20 to-green-600/20 border-emerald-500/30' : 
+                                lucroEstimado >= 7 ? 'from-green-600/20 to-emerald-600/20 border-green-500/30' :
+                                lucroEstimado >= 5 ? 'from-yellow-600/20 to-amber-600/20 border-yellow-500/30' :
+                                lucroEstimado >= 3 ? 'from-orange-600/20 to-red-600/20 border-orange-500/30' : 'from-red-600/20 to-rose-600/20 border-red-500/30';
+
+                return (
+                  <div className={`p-4 rounded-xl bg-gradient-to-br ${bgLucro} border`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">💰</span>
+                      <h4 className="font-medium text-white">Simulação de Receita</h4>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {/* Exemplo base */}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-400">Depósito do jogador:</span>
+                        <span className="text-white font-medium">R$ {depositoExemplo.toFixed(2)}</span>
+                      </div>
+                      
+                      {/* House Edge */}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-400">Margem da casa (100% - RTP):</span>
+                        <span className="text-blue-400 font-medium">{houseEdge.toFixed(1)}%</span>
+                      </div>
+                      
+                      {/* Engajamento */}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-400">Fator de engajamento:</span>
+                        <span className={`font-medium ${engajamento >= 1 ? 'text-emerald-400' : engajamento >= 0.7 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {(engajamento * 100).toFixed(0)}%
+                          {engajamento < 0.7 && <span className="text-xs ml-1">(jogador desiste rápido)</span>}
+                          {engajamento >= 1 && <span className="text-xs ml-1">(jogador engajado)</span>}
+                        </span>
+                      </div>
+                      
+                      <div className="border-t border-slate-600/50 pt-3 mt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-300 font-medium">Seu lucro estimado:</span>
+                          <span className={`text-2xl font-bold ${corLucro}`}>
+                            R$ {lucroEstimado.toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Por cada R$ {depositoExemplo} depositados
+                        </p>
+                      </div>
+                      
+                      {/* Dica contextual */}
+                      <div className={`mt-3 p-2 rounded-lg text-xs ${
+                        isLucrativo ? 'bg-emerald-500/10 text-emerald-300' :
+                        isEquilibrado ? 'bg-yellow-500/10 text-yellow-300' :
+                        'bg-red-500/10 text-red-300'
+                      }`}>
+                        {isLucrativo && <>✓ <strong>Configuração lucrativa!</strong> Boa margem com jogadores engajados.</>}
+                        {isEquilibrado && <>⚖️ <strong>Configuração equilibrada.</strong> Lucro moderado com boa experiência.</>}
+                        {isArriscado && <>⚠️ <strong>Atenção!</strong> {editRtp > 95 ? 'RTP muito alto reduz sua margem.' : 'Win chance baixo faz jogadores desistirem.'}</>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {message && (
                 <div className={`p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300' : 'bg-red-500/20 border border-red-500/50 text-red-300'}`}>
