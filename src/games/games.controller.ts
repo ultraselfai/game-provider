@@ -359,6 +359,52 @@ export class GamesController {
     this.logger.log(`[SPIN] Usando numLines da config: ${numLines} (jogo enviou: ${numLinesFromGame})`);
     this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
+    // =============================================
+    // CONSUMO DE CRÉDITO DO AGENTE (1 spin = 1 crédito)
+    // Funciona em AMBOS os modos (LOCAL e REMOTE)
+    // =============================================
+    if (session.agent) {
+      const agent = await this.agentRepository.findOne({ where: { id: session.agent.id } });
+      if (!agent) {
+        this.logger.error(`[SPIN] Agent not found: ${session.agent.id}`);
+        return res.status(200).json({
+          success: false,
+          message: 'Agent not found',
+        });
+      }
+
+      const currentSpinCredits = Number(agent.spinCredits);
+      if (currentSpinCredits < 1) {
+        this.logger.warn(`[SPIN] BLOQUEADO - Agente ${agent.name} sem créditos de spin: ${currentSpinCredits}`);
+        return res.status(200).json({
+          success: false,
+          message: 'Agent has no spin credits. Please contact the game provider.',
+        });
+      }
+
+      // Debita 1 crédito do agente
+      const creditsBefore = currentSpinCredits;
+      const creditsAfter = creditsBefore - 1;
+      agent.spinCredits = creditsAfter;
+      agent.totalSpinsConsumed = Number(agent.totalSpinsConsumed) + 1;
+      await this.agentRepository.save(agent);
+
+      // Registra transação de consumo de spin
+      const spinTransaction = this.agentTransactionRepository.create({
+        agentId: agent.id,
+        type: AgentTransactionType.GGR_DEDUCTION,
+        amount: -1,
+        previousBalance: creditsBefore,
+        newBalance: creditsAfter,
+        description: `Spin consumido - ${session.gameCode}`,
+        reference: session.id,
+        createdBy: 'system',
+      });
+      await this.agentTransactionRepository.save(spinTransaction);
+
+      this.logger.log(`[SPIN] Crédito consumido para agente ${agent.name}. Restante: ${creditsAfter}`);
+    }
+
     // VALIDAÇÃO DE SALDO: Só valida cache no modo LOCAL
     // No modo REMOTE, o webhook de debit fará a validação real
     if (!useRemoteWebhooks) {
@@ -531,11 +577,8 @@ export class GamesController {
       }
     }
 
-    // 7. DEDUÇÃO DE GGR - Cobra percentual do agente sobre o valor apostado
-    // Isso é feito APÓS o processamento do spin, independente de ganho/perda
-    if (session.agent && !useRemoteWebhooks) {
-      await this.deductAgentGGR(session.agent, totalBet, session.id);
-    }
+    // NOTA: Dedução de crédito do agente já foi feita no início do spin (1 spin = 1 crédito)
+    // O modelo antigo de GGR percentual foi removido em favor do modelo de créditos por spin
 
     this.logger.log(`[SPIN] Round: ${round.roundId}, Bet: ${totalBet}, Win: ${spinResult.totalWin}, Balance: ${currentBalance}, Mode: ${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 

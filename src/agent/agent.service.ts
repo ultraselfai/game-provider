@@ -650,6 +650,34 @@ export class AgentService {
     return { apiKey, apiSecret };
   }
 
+  /**
+   * Reseta créditos de todos os agentes e limpa histórico de transações
+   * Use com cuidado - operação destrutiva!
+   */
+  async resetAllAgentCredits(): Promise<{ agentsReset: number; transactionsDeleted: number }> {
+    // Busca todos os agentes
+    const agents = await this.agentRepo.find();
+    
+    // Zera créditos de todos
+    for (const agent of agents) {
+      agent.spinCredits = 0;
+      agent.totalSpinsConsumed = 0;
+      agent.totalCreditsPurchased = 0;
+      await this.agentRepo.save(agent);
+    }
+
+    // Deleta todas as transações
+    const deleteResult = await this.agentTransactionRepo.delete({});
+    const transactionsDeleted = deleteResult.affected || 0;
+
+    this.logger.warn(`[ADMIN] RESET: ${agents.length} agents reset, ${transactionsDeleted} transactions deleted`);
+
+    return {
+      agentsReset: agents.length,
+      transactionsDeleted,
+    };
+  }
+
   // =============================================
   // CONFIGURAÇÕES DE JOGOS DO AGENTE
   // =============================================

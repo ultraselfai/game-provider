@@ -129,7 +129,20 @@ export class AgentController {
     const accessToken = this.extractBearerToken(authHeader);
     const { operatorId } = await this.agentService.validateToken(accessToken);
     const transactions = await this.agentService.getAgentTransactions(operatorId);
-    return { success: true, data: transactions };
+    
+    // Mapeia os tipos para o formato esperado pelo frontend
+    const mappedTransactions = transactions.map(tx => ({
+      id: tx.id,
+      type: tx.type === 'credit_addition' ? 'credit' : 'debit',
+      amount: tx.amount,
+      previousBalance: tx.previousBalance,
+      newBalance: tx.newBalance,
+      description: tx.description,
+      reference: tx.reference,
+      createdAt: tx.createdAt,
+    }));
+    
+    return { success: true, data: mappedTransactions };
   }
 
   @Get('games')
@@ -426,6 +439,23 @@ export class AgentController {
     return {
       success: true,
       message: '⚠️ GUARDE O NOVO API SECRET - ele não será mostrado novamente!',
+      data: result,
+    };
+  }
+
+  @Post('agents/reset-all-credits')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Resetar Créditos de Todos os Agentes',
+    description: 'Zera o saldo de spinCredits de todos os agentes e limpa histórico de transações. Use com cuidado!'
+  })
+  @ApiHeader({ name: 'x-admin-key', required: true })
+  async resetAllAgentCredits(@Headers('x-admin-key') adminKey: string) {
+    this.validateAdminKey(adminKey);
+    const result = await this.agentService.resetAllAgentCredits();
+    return {
+      success: true,
+      message: 'Todos os créditos de agentes foram zerados',
       data: result,
     };
   }
