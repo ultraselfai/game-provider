@@ -218,7 +218,7 @@ export default function GamesPage() {
               <div className="text-right">
                 <p className="text-xs text-slate-400">Créditos de Spin</p>
                 <p className={`text-2xl font-bold ${Number(agent?.spinCredits) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Number(agent?.spinCredits || 0).toLocaleString('pt-BR')} créditos
+                  {Math.floor(Number(agent?.spinCredits || 0))} créditos
                 </p>
               </div>
             </div>
