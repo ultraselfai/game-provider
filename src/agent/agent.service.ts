@@ -750,14 +750,14 @@ export class AgentService {
       throw new BadRequestException(`Game ${gameCode} is not allowed for this agent`);
     }
 
-    // Validar RTP (85-99%)
-    if (updates.rtp !== undefined && (updates.rtp < 85 || updates.rtp > 99)) {
-      throw new BadRequestException('RTP must be between 85% and 99%');
+    // Validar RTP (0-99%)
+    if (updates.rtp !== undefined && (updates.rtp < 0 || updates.rtp > 99)) {
+      throw new BadRequestException('RTP must be between 0% and 99%');
     }
 
-    // Validar winChance (10-60%)
-    if (updates.winChance !== undefined && (updates.winChance < 10 || updates.winChance > 60)) {
-      throw new BadRequestException('Win chance must be between 10% and 60%');
+    // Validar winChance (0-99%)
+    if (updates.winChance !== undefined && (updates.winChance < 0 || updates.winChance > 99)) {
+      throw new BadRequestException('Win chance must be between 0% and 99%');
     }
 
     // Valores padrão

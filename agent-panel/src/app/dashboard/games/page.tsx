@@ -256,6 +256,101 @@ export default function GamesPage() {
           </div>
         </div>
 
+        {/* Painel Explicativo */}
+        <div className="mb-8 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/30 to-slate-900/50 p-6">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            📚 Entenda RTP e Chance de Vitória
+          </h3>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* RTP Explicação */}
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">💰</span>
+                <h4 className="font-semibold text-blue-400">RTP (Return to Player)</h4>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">
+                É a porcentagem que <strong>volta para os jogadores</strong> ao longo do tempo.
+                O resto fica com você (a casa).
+              </p>
+              <div className="bg-slate-900/50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">RTP 90%:</span>
+                  <span className="text-emerald-400 font-medium">Você fica com 10% → R$10 a cada R$100</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">RTP 96%:</span>
+                  <span className="text-yellow-400 font-medium">Você fica com 4% → R$4 a cada R$100</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">RTP 50%:</span>
+                  <span className="text-red-400 font-medium">Você fica com 50% → R$50 a cada R$100</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                💡 RTP menor = mais lucro para você, mas jogadores podem perceber e sair
+              </p>
+            </div>
+
+            {/* Win Chance Explicação */}
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">🎯</span>
+                <h4 className="font-semibold text-emerald-400">Chance de Vitória (Win Rate)</h4>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">
+                É a <strong>frequência</strong> com que o jogador ganha. Não afeta seu lucro final,
+                mas sim a <strong>experiência</strong> do jogador.
+              </p>
+              <div className="bg-slate-900/50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Win 50%:</span>
+                  <span className="text-emerald-400">Muitas vitórias pequenas → jogador engajado</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Win 20%:</span>
+                  <span className="text-yellow-400">Vitórias médias → equilíbrio</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Win 5%:</span>
+                  <span className="text-red-400">Poucos BIG WINS → jogador pode desistir rápido</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                💡 Win Chance alto mantém o jogador jogando mais tempo = mais depósitos
+              </p>
+            </div>
+          </div>
+
+          {/* Exemplo Prático */}
+          <div className="mt-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-4 border border-blue-500/30">
+            <h4 className="font-semibold text-white mb-2">📊 Exemplo Prático: Jogador deposita R$100 e faz 100 spins</h4>
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <p className="text-emerald-400 font-medium mb-1">Cenário A: RTP 90%, Win 50%</p>
+                <ul className="text-slate-300 space-y-1">
+                  <li>• ~50 spins ganham algo</li>
+                  <li>• Prêmio médio: R$1.80 por vitória</li>
+                  <li>• Jogador ganha R$90 total</li>
+                  <li>• <strong className="text-emerald-400">Seu lucro: R$10</strong></li>
+                </ul>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <p className="text-yellow-400 font-medium mb-1">Cenário B: RTP 90%, Win 10%</p>
+                <ul className="text-slate-300 space-y-1">
+                  <li>• ~10 spins ganham algo</li>
+                  <li>• Prêmio médio: R$9.00 por vitória</li>
+                  <li>• Jogador ganha R$90 total</li>
+                  <li>• <strong className="text-emerald-400">Seu lucro: R$10</strong></li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-3">
+              ⚠️ Mesmo lucro nos dois cenários! A diferença é: no Cenário A o jogador fica mais tempo jogando (pode fazer novos depósitos).
+            </p>
+          </div>
+        </div>
+
         {/* Games Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredGames.map((game) => (
@@ -308,26 +403,12 @@ export default function GamesPage() {
             <p className="text-slate-400">Nenhum jogo encontrado</p>
           </div>
         )}
-
-        {/* Info */}
-        <div className="mt-8 rounded-xl border border-blue-500/30 bg-blue-500/10 p-5">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">📊</span>
-            <div>
-              <h3 className="font-medium text-blue-300">Como funcionam as configurações?</h3>
-              <div className="text-sm text-blue-200/70 mt-1 space-y-2">
-                <p><strong>RTP:</strong> Porcentagem que retorna aos jogadores (85-99%). Menor = mais lucro para você.</p>
-                <p><strong>Chance de Vitória:</strong> Probabilidade de ganhar em cada spin (10-60%). Menor = prêmios maiores.</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
 
       {/* Modal */}
       {showModal && selectedGame && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl my-4">
             <div className="flex items-center justify-between p-5 border-b border-slate-700">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/30 to-blue-600/30 flex items-center justify-center text-2xl">{getGameIcon(selectedGame.gameCode)}</div>
@@ -339,115 +420,144 @@ export default function GamesPage() {
               <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition">✕</button>
             </div>
 
-            <div className="p-5 space-y-6">
+            <div className="p-5 space-y-6 max-h-[70vh] overflow-y-auto">
               {/* RTP */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-white">RTP (Return to Player)</label>
+                  <div>
+                    <label className="text-sm font-medium text-white">RTP (Return to Player)</label>
+                    <p className="text-xs text-slate-500">Quanto volta para os jogadores</p>
+                  </div>
                   <span className="text-lg font-bold text-blue-400">{editRtp.toFixed(1)}%</span>
                 </div>
-                <input type="range" min="85" max="99" step="0.5" value={editRtp} onChange={(e) => setEditRtp(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-500" />
+                <input type="range" min="0" max="99" step="0.5" value={editRtp} onChange={(e) => setEditRtp(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-500" />
                 <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>85% (Mais lucro)</span>
-                  <span>99% (Mais prêmios)</span>
+                  <span>0% (100% lucro)</span>
+                  <span>99% (1% lucro)</span>
                 </div>
               </div>
 
               {/* Win Chance */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-white">Chance de Vitória</label>
+                  <div>
+                    <label className="text-sm font-medium text-white">Chance de Vitória</label>
+                    <p className="text-xs text-slate-500">Frequência de ganhos por spin</p>
+                  </div>
                   <span className="text-lg font-bold text-emerald-400">{editWinChance}%</span>
                 </div>
-                <input type="range" min="10" max="60" step="1" value={editWinChance} onChange={(e) => setEditWinChance(parseInt(e.target.value))} className="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer accent-emerald-500" />
+                <input type="range" min="0" max="99" step="1" value={editWinChance} onChange={(e) => setEditWinChance(parseInt(e.target.value))} className="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer accent-emerald-500" />
                 <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>10% (Prêmios maiores)</span>
-                  <span>60% (Mais frequentes)</span>
+                  <span>0% (nunca ganha)</span>
+                  <span>99% (sempre ganha)</span>
                 </div>
               </div>
 
-              {/* Calculadora de Receita */}
+              {/* Calculadora de Receita Melhorada */}
               {(() => {
                 const depositoExemplo = 100;
-                const houseEdge = 100 - editRtp; // Ex: RTP 90% = 10% house edge
+                const houseEdge = 100 - editRtp;
                 const lucroTeorico = depositoExemplo * (houseEdge / 100);
                 
-                // Fator de engajamento: winChance afeta quanto do depósito é "jogado"
-                // Baseline: 35% winChance = 100% do depósito jogado
-                // WinChance baixo = jogador desiste antes, menos receita efetiva
-                // WinChance alto = jogador joga mais, mais receita (até certo ponto)
-                const baselineWinChance = 35;
-                const engajamento = Math.min(1.2, Math.max(0.5, editWinChance / baselineWinChance));
-                const lucroEstimado = lucroTeorico * engajamento;
+                // Cálculo mais realista de prêmio médio por vitória
+                const totalRetorno = depositoExemplo * (editRtp / 100);
+                const spinsMedios = 100; // Considerando 100 spins por R$100
+                const vitoriasEsperadas = Math.max(1, Math.round(spinsMedios * (editWinChance / 100)));
+                const premioMedioPorVitoria = totalRetorno / vitoriasEsperadas;
                 
-                // Indicadores
-                const isLucrativo = lucroEstimado >= 8;
-                const isEquilibrado = lucroEstimado >= 5 && lucroEstimado < 8;
-                const isArriscado = lucroEstimado < 5;
+                // Determinar tipo de experiência
+                let tipoExperiencia = '';
+                let corExperiencia = '';
+                if (editWinChance >= 40) {
+                  tipoExperiencia = 'Muitas vitórias pequenas';
+                  corExperiencia = 'text-emerald-400';
+                } else if (editWinChance >= 20) {
+                  tipoExperiencia = 'Vitórias moderadas';
+                  corExperiencia = 'text-yellow-400';
+                } else if (editWinChance >= 5) {
+                  tipoExperiencia = 'Poucas vitórias grandes (BIG WINS)';
+                  corExperiencia = 'text-orange-400';
+                } else {
+                  tipoExperiencia = 'Raramente ganha (extremo)';
+                  corExperiencia = 'text-red-400';
+                }
+
+                // Classificar a configuração
+                let statusConfig = '';
+                let statusCor = '';
+                let statusBg = '';
                 
-                // Cor baseada no lucro
-                const corLucro = lucroEstimado >= 10 ? 'text-emerald-400' : 
-                                 lucroEstimado >= 7 ? 'text-green-400' :
-                                 lucroEstimado >= 5 ? 'text-yellow-400' :
-                                 lucroEstimado >= 3 ? 'text-orange-400' : 'text-red-400';
-                
-                const bgLucro = lucroEstimado >= 10 ? 'from-emerald-600/20 to-green-600/20 border-emerald-500/30' : 
-                                lucroEstimado >= 7 ? 'from-green-600/20 to-emerald-600/20 border-green-500/30' :
-                                lucroEstimado >= 5 ? 'from-yellow-600/20 to-amber-600/20 border-yellow-500/30' :
-                                lucroEstimado >= 3 ? 'from-orange-600/20 to-red-600/20 border-orange-500/30' : 'from-red-600/20 to-rose-600/20 border-red-500/30';
+                if (editRtp >= 95 && editWinChance >= 40) {
+                  statusConfig = '⚠️ Lucro baixo, jogador muito beneficiado';
+                  statusCor = 'text-red-300';
+                  statusBg = 'bg-red-500/20 border-red-500/30';
+                } else if (editRtp <= 70) {
+                  statusConfig = '💰 Lucro alto! Cuidado: jogadores podem perceber e sair';
+                  statusCor = 'text-amber-300';
+                  statusBg = 'bg-amber-500/20 border-amber-500/30';
+                } else if (editWinChance <= 10) {
+                  statusConfig = '⚠️ Vitórias raras podem frustrar jogadores rapidamente';
+                  statusCor = 'text-orange-300';
+                  statusBg = 'bg-orange-500/20 border-orange-500/30';
+                } else if (editRtp >= 85 && editRtp <= 93 && editWinChance >= 25 && editWinChance <= 50) {
+                  statusConfig = '✅ Configuração equilibrada - bom lucro e boa experiência';
+                  statusCor = 'text-emerald-300';
+                  statusBg = 'bg-emerald-500/20 border-emerald-500/30';
+                } else {
+                  statusConfig = '📊 Configuração personalizada';
+                  statusCor = 'text-blue-300';
+                  statusBg = 'bg-blue-500/20 border-blue-500/30';
+                }
 
                 return (
-                  <div className={`p-4 rounded-xl bg-gradient-to-br ${bgLucro} border`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">💰</span>
-                      <h4 className="font-medium text-white">Simulação de Receita</h4>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {/* Exemplo base */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-400">Depósito do jogador:</span>
-                        <span className="text-white font-medium">R$ {depositoExemplo.toFixed(2)}</span>
-                      </div>
+                  <div className="space-y-4">
+                    {/* Resumo Principal */}
+                    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-4 border border-slate-600">
+                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                        💰 Simulação: Jogador deposita R$ {depositoExemplo}
+                      </h4>
                       
-                      {/* House Edge */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-400">Margem da casa (100% - RTP):</span>
-                        <span className="text-blue-400 font-medium">{houseEdge.toFixed(1)}%</span>
-                      </div>
-                      
-                      {/* Engajamento */}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-400">Fator de engajamento:</span>
-                        <span className={`font-medium ${engajamento >= 1 ? 'text-emerald-400' : engajamento >= 0.7 ? 'text-yellow-400' : 'text-red-400'}`}>
-                          {(engajamento * 100).toFixed(0)}%
-                          {engajamento < 0.7 && <span className="text-xs ml-1">(jogador desiste rápido)</span>}
-                          {engajamento >= 1 && <span className="text-xs ml-1">(jogador engajado)</span>}
-                        </span>
-                      </div>
-                      
-                      <div className="border-t border-slate-600/50 pt-3 mt-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-300 font-medium">Seu lucro estimado:</span>
-                          <span className={`text-2xl font-bold ${corLucro}`}>
-                            R$ {lucroEstimado.toFixed(2)}
-                          </span>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                          <p className="text-xs text-slate-500 mb-1">Seu Lucro</p>
+                          <p className={`text-2xl font-bold ${houseEdge >= 10 ? 'text-emerald-400' : houseEdge >= 5 ? 'text-yellow-400' : 'text-red-400'}`}>
+                            R$ {lucroTeorico.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-slate-500">({houseEdge.toFixed(1)}% do depósito)</p>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Por cada R$ {depositoExemplo} depositados
-                        </p>
+                        <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                          <p className="text-xs text-slate-500 mb-1">Jogador Recebe</p>
+                          <p className="text-2xl font-bold text-blue-400">R$ {totalRetorno.toFixed(2)}</p>
+                          <p className="text-xs text-slate-500">(RTP {editRtp.toFixed(1)}%)</p>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Experiência do Jogador */}
+                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700">
+                      <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                        🎯 Como o jogador vai experienciar
+                      </h4>
                       
-                      {/* Dica contextual */}
-                      <div className={`mt-3 p-2 rounded-lg text-xs ${
-                        isLucrativo ? 'bg-emerald-500/10 text-emerald-300' :
-                        isEquilibrado ? 'bg-yellow-500/10 text-yellow-300' :
-                        'bg-red-500/10 text-red-300'
-                      }`}>
-                        {isLucrativo && <>✓ <strong>Configuração lucrativa!</strong> Boa margem com jogadores engajados.</>}
-                        {isEquilibrado && <>⚖️ <strong>Configuração equilibrada.</strong> Lucro moderado com boa experiência.</>}
-                        {isArriscado && <>⚠️ <strong>Atenção!</strong> {editRtp > 95 ? 'RTP muito alto reduz sua margem.' : 'Win chance baixo faz jogadores desistirem.'}</>}
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Em 100 spins, ele ganha:</span>
+                          <span className="text-white font-medium">~{vitoriasEsperadas} vezes</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Prêmio médio por vitória:</span>
+                          <span className="text-white font-medium">R$ {premioMedioPorVitoria.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Tipo de experiência:</span>
+                          <span className={`font-medium ${corExperiencia}`}>{tipoExperiencia}</span>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Status da Configuração */}
+                    <div className={`rounded-lg p-3 border ${statusBg}`}>
+                      <p className={`text-sm ${statusCor}`}>{statusConfig}</p>
                     </div>
                   </div>
                 );
