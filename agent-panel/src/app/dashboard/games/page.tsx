@@ -234,7 +234,9 @@ export default function GamesPage() {
           <div className="flex gap-1">
             <Link href="/dashboard" className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition">📊 Dashboard</Link>
             <Link href="/dashboard/games" className="px-4 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400">🎮 Jogos</Link>
+            <Link href="/dashboard/transactions" className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition">📋 Transações</Link>
             <Link href="/dashboard/integration" className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition">🔗 Integração</Link>
+            <Link href="/dashboard/settings" className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition">⚙️ Configurações</Link>
           </div>
         </div>
       </nav>

@@ -100,6 +100,25 @@ export class AgentController {
     return { success: true, data: agent };
   }
 
+  @Put('password')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Alterar Senha do Agente',
+    description: 'Permite ao agente alterar sua própria senha.'
+  })
+  async changePassword(
+    @Headers('authorization') authHeader: string,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    const accessToken = this.extractBearerToken(authHeader);
+    const { operatorId } = await this.agentService.validateToken(accessToken);
+    
+    await this.agentService.changePassword(operatorId, body.currentPassword, body.newPassword);
+    
+    this.logger.log(`[Agent] Password changed for agent ${operatorId}`);
+    return { success: true, message: 'Senha alterada com sucesso' };
+  }
+
   @Get('transactions')
   @ApiBearerAuth()
   @ApiOperation({
@@ -278,6 +297,22 @@ export class AgentController {
     const agent = await this.agentService.updateAgent(id, body);
     if (!agent) throw new NotFoundException('Agent not found');
     return { success: true, data: agent };
+  }
+
+  @Put('agents/:id/password')
+  @ApiOperation({
+    summary: 'Resetar Senha do Agente',
+    description: 'Admin reseta a senha de um agente.'
+  })
+  @ApiHeader({ name: 'x-admin-key', required: true })
+  async resetAgentPassword(
+    @Headers('x-admin-key') adminKey: string,
+    @Param('id') id: string,
+    @Body() body: { newPassword: string },
+  ) {
+    this.validateAdminKey(adminKey);
+    await this.agentService.adminResetAgentPassword(id, body.newPassword);
+    return { success: true, message: 'Senha do agente alterada com sucesso' };
   }
 
   // =============================================

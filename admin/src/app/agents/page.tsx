@@ -748,6 +748,13 @@ function AgentDetailsModal({
   const [transactions, setTransactions] = useState<AgentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  
+  // Password reset state
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -773,6 +780,49 @@ function AgentDetailsModal({
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (newPassword.length < 6) {
+      setPasswordMessage({ type: 'error', text: 'Senha deve ter pelo menos 6 caracteres' });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'As senhas não conferem' });
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      const res = await fetch(`${AGENT_API}/agents/${agent.id}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': ADMIN_KEY,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setPasswordMessage({ type: 'success', text: 'Senha alterada com sucesso!' });
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordReset(false);
+      } else {
+        setPasswordMessage({ type: 'error', text: data.message || 'Erro ao alterar senha' });
+      }
+    } catch (err) {
+      setPasswordMessage({ type: 'error', text: 'Erro de conexão' });
+    } finally {
+      setPasswordLoading(false);
+    }
   }
 
   return (
@@ -841,6 +891,63 @@ function AgentDetailsModal({
               {copiedKey === 'apiKey' ? '✅' : '📋'}
             </button>
           </div>
+        </div>
+
+        {/* Reset Password Section */}
+        <div className="mb-6 rounded-lg border border-slate-600 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h5 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+              🔐 Senha do Agente
+            </h5>
+            <button
+              onClick={() => setShowPasswordReset(!showPasswordReset)}
+              className="text-xs text-emerald-400 hover:text-emerald-300"
+            >
+              {showPasswordReset ? 'Cancelar' : 'Alterar Senha'}
+            </button>
+          </div>
+
+          {passwordMessage && (
+            <div className={`mb-3 p-2 rounded text-sm ${
+              passwordMessage.type === 'success' 
+                ? 'bg-emerald-500/20 text-emerald-300' 
+                : 'bg-red-500/20 text-red-300'
+            }`}>
+              {passwordMessage.text}
+            </div>
+          )}
+
+          {showPasswordReset && (
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              <div>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Nova senha (mín. 6 caracteres)"
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirmar nova senha"
+                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50"
+              >
+                {passwordLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Recent Transactions */}

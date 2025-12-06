@@ -101,6 +101,54 @@ export class AgentService {
   // =============================================
 
   /**
+   * Altera a senha do agente autenticado
+   */
+  async changePassword(agentId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    // Verificar senha atual
+    const isValidPassword = await bcrypt.compare(currentPassword, agent.passwordHash || '');
+    if (!isValidPassword) {
+      throw new BadRequestException('Senha atual incorreta');
+    }
+
+    // Validar nova senha
+    if (newPassword.length < 6) {
+      throw new BadRequestException('Nova senha deve ter pelo menos 6 caracteres');
+    }
+
+    // Atualizar senha
+    agent.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.agentRepo.save(agent);
+
+    this.logger.log(`[AGENT] Password changed for: ${agent.email}`);
+  }
+
+  /**
+   * Admin altera a senha de um agente
+   */
+  async adminResetAgentPassword(agentId: string, newPassword: string): Promise<void> {
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    // Validar nova senha
+    if (newPassword.length < 6) {
+      throw new BadRequestException('Nova senha deve ter pelo menos 6 caracteres');
+    }
+
+    // Atualizar senha
+    agent.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.agentRepo.save(agent);
+
+    this.logger.log(`[ADMIN] Password reset for agent: ${agent.email}`);
+  }
+
+  /**
    * Login do agente usando email e senha
    * Para uso no painel do agente
    */
