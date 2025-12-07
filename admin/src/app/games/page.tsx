@@ -47,6 +47,7 @@ export default function GamesPage() {
   const [games, setGames] = useState<GameSettings[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [editingGame, setEditingGame] = useState<GameSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -75,6 +76,7 @@ export default function GamesPage() {
   async function saveGameSettings(gameCode: string, updates: Partial<GameSettings>) {
     try {
       setSaving(true);
+      setError(null);
       const res = await fetch(`${ADMIN_API}/games/${gameCode}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -85,14 +87,19 @@ export default function GamesPage() {
         const updatedGame = await res.json();
         setGames(games.map(g => g.gameCode === gameCode ? updatedGame : g));
         setEditingGame(null);
+        setSuccess(`✅ ${updatedGame.gameName} atualizado com sucesso!`);
+        setTimeout(() => setSuccess(null), 5000);
         return true;
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Erro ao salvar');
+        const errorMsg = Array.isArray(errorData.message) 
+          ? errorData.message.join(', ') 
+          : errorData.message || 'Erro ao salvar';
+        setError(`❌ ${errorMsg}`);
         return false;
       }
     } catch (err) {
-      setError('Erro ao salvar configurações');
+      setError('❌ Erro ao salvar configurações - verifique a conexão');
       return false;
     } finally {
       setSaving(false);
@@ -131,6 +138,13 @@ export default function GamesPage() {
           <div className="mb-6 rounded-lg bg-red-500/20 border border-red-500/50 p-4 text-red-300 flex justify-between items-center">
             <span>{error}</span>
             <button onClick={() => setError(null)} className="text-red-400 hover:text-white">✕</button>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 rounded-lg bg-emerald-500/20 border border-emerald-500/50 p-4 text-emerald-300 flex justify-between items-center">
+            <span>{success}</span>
+            <button onClick={() => setSuccess(null)} className="text-emerald-400 hover:text-white">✕</button>
           </div>
         )}
 

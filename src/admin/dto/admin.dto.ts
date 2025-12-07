@@ -290,19 +290,19 @@ export class UpdateGameSettingsDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(0.01)
+  @Min(0.000001)
   minBet?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(0.01)
+  @Min(0.000001)
   maxBet?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(0.01)
+  @Min(0.000001)
   defaultBet?: number;
 
   @IsOptional()
