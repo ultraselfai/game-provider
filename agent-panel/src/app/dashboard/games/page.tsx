@@ -191,20 +191,20 @@ export default function GamesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
                 <span className="text-xl">🎰</span>
               </div>
               <div>
@@ -257,7 +257,7 @@ export default function GamesPage() {
         </div>
 
         {/* Painel Explicativo */}
-        <div className="mb-8 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/30 to-slate-900/50 p-6">
+        <div className="mb-8 rounded-2xl border border-purple-500/30 bg-linear-to-br from-purple-900/30 to-slate-900/50 p-6">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             📚 Entenda RTP e Chance de Vitória
           </h3>
@@ -323,7 +323,7 @@ export default function GamesPage() {
           </div>
 
           {/* Exemplo Prático */}
-          <div className="mt-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-4 border border-blue-500/30">
+          <div className="mt-4 bg-linear-to-r from-blue-600/20 to-purple-600/20 rounded-xl p-4 border border-blue-500/30">
             <h4 className="font-semibold text-white mb-2">📊 Exemplo Prático: Jogador deposita R$100 e faz 100 spins</h4>
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
               <div className="bg-slate-800/50 rounded-lg p-3">
@@ -356,7 +356,7 @@ export default function GamesPage() {
           {filteredGames.map((game) => (
             <div key={game.gameCode} className="rounded-xl border border-slate-700 bg-slate-800/50 p-5 transition hover:border-emerald-500/50">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600/30 to-blue-600/30 flex items-center justify-center text-3xl">{getGameIcon(game.gameCode)}</div>
+                <div className="w-14 h-14 rounded-xl bg-linear-to-br from-purple-600/30 to-blue-600/30 flex items-center justify-center text-3xl">{getGameIcon(game.gameCode)}</div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
@@ -411,7 +411,7 @@ export default function GamesPage() {
           <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl my-4">
             <div className="flex items-center justify-between p-5 border-b border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/30 to-blue-600/30 flex items-center justify-center text-2xl">{getGameIcon(selectedGame.gameCode)}</div>
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-600/30 to-blue-600/30 flex items-center justify-center text-2xl">{getGameIcon(selectedGame.gameCode)}</div>
                 <div>
                   <h3 className="font-semibold text-white">{selectedGame.gameName}</h3>
                   <p className="text-xs text-slate-400">Configurações do jogo</p>
@@ -512,7 +512,7 @@ export default function GamesPage() {
                 return (
                   <div className="space-y-4">
                     {/* Resumo Principal */}
-                    <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-4 border border-slate-600">
+                    <div className="bg-linear-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-4 border border-slate-600">
                       <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
                         💰 Simulação: Jogador deposita R$ {depositoExemplo}
                       </h4>
