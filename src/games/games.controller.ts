@@ -347,16 +347,16 @@ export class GamesController {
     const cpl = parseFloat(body.cpl || '1');
     
     // CÁLCULO DO TOTAL BET
-    // Para jogos 3x3 (Fortune Tiger/Ox/Mouse): numLines é fixo (5)
-    // Para jogos 5x3 (Phoenix Rises, etc): numLines é o que o jogador escolhe
-    // Usamos o valor que o JOGO envia (numLinesFromGame) pois é o que o jogador vê
+    // Jogos "243 Ways" (Phoenix Rises, etc): o betAmount JÁ É o valor total da aposta
+    // Jogos de linhas (Fortune Tiger, etc): betAmount * numLines = total
+    const isWaysGame = config.numLines >= 243; // 243 ways, 1024 ways, etc.
     const numLines = numLinesFromGame;
-    const totalBet = betAmount * numLines * cpl;
+    const totalBet = isWaysGame ? (betAmount * cpl) : (betAmount * numLines * cpl);
 
     // LOG DETALHADO para debug
     this.logger.log(`[SPIN] === REQUISIÇÃO DO JOGO ===`);
-    this.logger.log(`[SPIN] Game: ${session.gameCode}, betamount="${body.betamount}", numline="${body.numline}", cpl="${body.cpl}"`);
-    this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
+    this.logger.log(`[SPIN] Game: ${session.gameCode}, betamount="${body.betamount}", numline="${body.numline}", cpl="${body.cpl}", isWaysGame=${isWaysGame}`);
+    this.logger.log(`[SPIN] totalBet=${totalBet}${isWaysGame ? ` (${betAmount} * ${cpl} - 243 Ways)` : ` (${betAmount} * ${numLines} * ${cpl})`}, saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
     // =============================================
     // VERIFICAÇÃO DE CRÉDITOS DO AGENTE (antes de qualquer operação)
