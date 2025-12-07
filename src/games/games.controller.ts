@@ -360,12 +360,13 @@ export class GamesController {
     this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
     // =============================================
-    // CONSUMO DE CRÉDITO DO AGENTE (1 spin = 1 crédito)
-    // Funciona em AMBOS os modos (LOCAL e REMOTE)
+    // VERIFICAÇÃO DE CRÉDITOS DO AGENTE (antes de qualquer operação)
+    // Apenas verifica - o consumo será feito após confirmar o debit
     // =============================================
+    let agentForSpin: Agent | null = null;
     if (session.agent) {
-      const agent = await this.agentRepository.findOne({ where: { id: session.agent.id } });
-      if (!agent) {
+      agentForSpin = await this.agentRepository.findOne({ where: { id: session.agent.id } });
+      if (!agentForSpin) {
         this.logger.error(`[SPIN] Agent not found: ${session.agent.id}`);
         return res.status(200).json({
           success: false,
@@ -373,36 +374,16 @@ export class GamesController {
         });
       }
 
-      const currentSpinCredits = Number(agent.spinCredits);
+      const currentSpinCredits = Number(agentForSpin.spinCredits);
       if (currentSpinCredits < 1) {
-        this.logger.warn(`[SPIN] BLOQUEADO - Agente ${agent.name} sem créditos de spin: ${currentSpinCredits}`);
+        this.logger.warn(`[SPIN] BLOQUEADO - Agente ${agentForSpin.name} sem créditos de spin: ${currentSpinCredits}`);
         return res.status(200).json({
           success: false,
           message: 'Agent has no spin credits. Please contact the game provider.',
         });
       }
-
-      // Debita 1 crédito do agente
-      const creditsBefore = currentSpinCredits;
-      const creditsAfter = creditsBefore - 1;
-      agent.spinCredits = creditsAfter;
-      agent.totalSpinsConsumed = Number(agent.totalSpinsConsumed) + 1;
-      await this.agentRepository.save(agent);
-
-      // Registra transação de consumo de spin
-      const spinTransaction = this.agentTransactionRepository.create({
-        agentId: agent.id,
-        type: AgentTransactionType.GGR_DEDUCTION,
-        amount: -1,
-        previousBalance: creditsBefore,
-        newBalance: creditsAfter,
-        description: `Spin consumido - ${session.gameCode}`,
-        reference: session.id,
-        createdBy: 'system',
-      });
-      await this.agentTransactionRepository.save(spinTransaction);
-
-      this.logger.log(`[SPIN] Crédito consumido para agente ${agent.name}. Restante: ${creditsAfter}`);
+      
+      this.logger.log(`[SPIN] Agente ${agentForSpin.name} tem ${currentSpinCredits} créditos`);
     }
 
     // VALIDAÇÃO DE SALDO: Só valida cache no modo LOCAL
@@ -464,6 +445,31 @@ export class GamesController {
         currentBalance = debitResponse.balance;
         session.cachedBalance = currentBalance; // Atualiza cache
         await this.sessionRepository.save(session);
+        
+        // CONSUMO DE CRÉDITO DO AGENTE - Só após debit confirmado
+        if (agentForSpin) {
+          const creditsBefore = Number(agentForSpin.spinCredits);
+          const creditsAfter = creditsBefore - 1;
+          agentForSpin.spinCredits = creditsAfter;
+          agentForSpin.totalSpinsConsumed = Number(agentForSpin.totalSpinsConsumed) + 1;
+          await this.agentRepository.save(agentForSpin);
+
+          // Registra transação de consumo de spin (não bloqueia - fire and forget)
+          this.agentTransactionRepository.save(
+            this.agentTransactionRepository.create({
+              agentId: agentForSpin.id,
+              type: AgentTransactionType.GGR_DEDUCTION,
+              amount: -1,
+              previousBalance: creditsBefore,
+              newBalance: creditsAfter,
+              description: `Spin consumido - ${session.gameCode}`,
+              reference: round.id,
+              createdBy: 'system',
+            })
+          ).catch(err => this.logger.error(`[SPIN] Erro ao salvar transação: ${err.message}`));
+
+          this.logger.log(`[SPIN] Crédito consumido: ${agentForSpin.name}. Restante: ${creditsAfter}`);
+        }
       } catch (error) {
         this.logger.error(`[SPIN] Remote debit error: ${error.message}`);
         round.status = RoundStatus.CANCELLED;
@@ -511,6 +517,31 @@ export class GamesController {
       session.cachedBalance = Number(session.cachedBalance) - totalBet;
       await this.sessionRepository.save(session);
       currentBalance = Number(session.cachedBalance);
+      
+      // CONSUMO DE CRÉDITO DO AGENTE - Modo LOCAL
+      if (agentForSpin) {
+        const creditsBefore = Number(agentForSpin.spinCredits);
+        const creditsAfter = creditsBefore - 1;
+        agentForSpin.spinCredits = creditsAfter;
+        agentForSpin.totalSpinsConsumed = Number(agentForSpin.totalSpinsConsumed) + 1;
+        await this.agentRepository.save(agentForSpin);
+
+        // Registra transação (fire and forget)
+        this.agentTransactionRepository.save(
+          this.agentTransactionRepository.create({
+            agentId: agentForSpin.id,
+            type: AgentTransactionType.GGR_DEDUCTION,
+            amount: -1,
+            previousBalance: creditsBefore,
+            newBalance: creditsAfter,
+            description: `Spin consumido - ${session.gameCode}`,
+            reference: round.id,
+            createdBy: 'system',
+          })
+        ).catch(err => this.logger.error(`[SPIN] Erro ao salvar transação: ${err.message}`));
+
+        this.logger.log(`[SPIN] Crédito consumido: ${agentForSpin.name}. Restante: ${creditsAfter}`);
+      }
     }
 
     // 3. Busca configurações dinâmicas - PRIORIZA config do AGENTE
