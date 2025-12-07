@@ -34,13 +34,13 @@ export class GameSettings {
   volatility: string;
 
   // Bet Configuration
-  @Column({ name: 'min_bet', type: 'decimal', precision: 10, scale: 2, default: 0.20 })
+  @Column({ name: 'min_bet', type: 'decimal', precision: 12, scale: 6, default: 0.20 })
   minBet: number;
 
-  @Column({ name: 'max_bet', type: 'decimal', precision: 10, scale: 2, default: 500.00 })
+  @Column({ name: 'max_bet', type: 'decimal', precision: 12, scale: 6, default: 500.00 })
   maxBet: number;
 
-  @Column({ name: 'default_bet', type: 'decimal', precision: 10, scale: 2, default: 1.00 })
+  @Column({ name: 'default_bet', type: 'decimal', precision: 12, scale: 6, default: 1.00 })
   defaultBet: number;
 
   // Bet sizes available (JSON array)

@@ -315,10 +315,10 @@ function EditGameModal({
               <label className="block text-sm text-slate-300 mb-2">Aposta Mínima</label>
               <input
                 type="number"
-                min="0.01"
-                step="0.01"
+                min="0.000001"
+                step="0.000001"
                 value={minBet}
-                onChange={(e) => setMinBet(parseFloat(e.target.value) || 0.01)}
+                onChange={(e) => setMinBet(parseFloat(e.target.value) || 0.000001)}
                 className="w-full rounded-lg bg-slate-700 border border-slate-600 px-3 py-2 text-white"
               />
             </div>
@@ -326,8 +326,8 @@ function EditGameModal({
               <label className="block text-sm text-slate-300 mb-2">Aposta Máxima</label>
               <input
                 type="number"
-                min="0.01"
-                step="0.01"
+                min="0.000001"
+                step="0.000001"
                 value={maxBet}
                 onChange={(e) => setMaxBet(parseFloat(e.target.value) || 1)}
                 className="w-full rounded-lg bg-slate-700 border border-slate-600 px-3 py-2 text-white"
@@ -340,10 +340,10 @@ function EditGameModal({
             <label className="block text-sm text-slate-300 mb-2">Aposta Padrão (Inicial)</label>
             <input
               type="number"
-              min="0.01"
-              step="0.01"
+              min="0.000001"
+              step="0.000001"
               value={defaultBet}
-              onChange={(e) => setDefaultBet(parseFloat(e.target.value) || 0.01)}
+              onChange={(e) => setDefaultBet(parseFloat(e.target.value) || 0.000001)}
               className="w-full rounded-lg bg-slate-700 border border-slate-600 px-3 py-2 text-white"
             />
           </div>
@@ -364,12 +364,22 @@ function EditGameModal({
 
         {/* Guia de Configuração */}
         <div className="mt-6 p-3 rounded-lg bg-blue-500/20 border border-blue-500/50">
-          <p className="text-sm text-blue-300 font-medium mb-2">📋 Guia de Configuração (Fortune Ox/Tiger)</p>
-          <ul className="text-xs text-blue-200 space-y-1">
-            <li>• Para aposta mínima de <strong>R$10</strong>: coloque Aposta Mínima = <strong>10</strong></li>
-            <li>• Para aposta inicial de <strong>R$10</strong>: coloque Aposta Padrão = <strong>2</strong></li>
-            <li>• Em Valores Disponíveis, o primeiro valor <strong>1</strong> representa R$10</li>
-          </ul>
+          <p className="text-sm text-blue-300 font-medium mb-2">📋 Guia de Configuração</p>
+          {game.gameCode === 'phoenixrises' ? (
+            <ul className="text-xs text-blue-200 space-y-1">
+              <li>• <strong>Phoenix Rises</strong> é um jogo 243 Ways (multiplica por 243)</li>
+              <li>• Para aposta final de <strong>R$1</strong>: Aposta Mínima = <strong>0.00412</strong></li>
+              <li>• Para aposta final de <strong>R$2</strong>: use <strong>0.00823</strong></li>
+              <li>• Fórmula: Valor desejado ÷ 243 = Aposta Mínima</li>
+              <li>• Valores Disponíveis: <strong>0.00412, 0.00823, 0.01646, 0.03292</strong></li>
+            </ul>
+          ) : (
+            <ul className="text-xs text-blue-200 space-y-1">
+              <li>• Para aposta mínima de <strong>R$10</strong>: coloque Aposta Mínima = <strong>10</strong></li>
+              <li>• Para aposta inicial de <strong>R$10</strong>: coloque Aposta Padrão = <strong>2</strong></li>
+              <li>• Em Valores Disponíveis, o primeiro valor <strong>1</strong> representa R$10</li>
+            </ul>
+          )}
         </div>
 
         {/* Warning */}
