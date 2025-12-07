@@ -346,17 +346,16 @@ export class GamesController {
     const numLinesFromGame = parseInt(body.numline || config.numLines.toString());
     const cpl = parseFloat(body.cpl || '1');
     
-    // CORREÇÃO: O jogo Construct 3 envia numline inconsistente (5 ao invés de 10)
-    // mas exibe o valor correto na interface. Precisamos calcular o totalBet
-    // usando o numLines da config do jogo para manter consistência com a interface.
-    // Fórmula: totalBet = betAmount * numLines(config) * cpl
-    const numLines = config.numLines; // Usa SEMPRE o numLines da config (10 para Fortune Ox/Tiger)
+    // CÁLCULO DO TOTAL BET
+    // Para jogos 3x3 (Fortune Tiger/Ox/Mouse): numLines é fixo (5)
+    // Para jogos 5x3 (Phoenix Rises, etc): numLines é o que o jogador escolhe
+    // Usamos o valor que o JOGO envia (numLinesFromGame) pois é o que o jogador vê
+    const numLines = numLinesFromGame;
     const totalBet = betAmount * numLines * cpl;
 
     // LOG DETALHADO para debug
     this.logger.log(`[SPIN] === REQUISIÇÃO DO JOGO ===`);
-    this.logger.log(`[SPIN] body: betamount="${body.betamount}", numline="${body.numline}" (ignorado), cpl="${body.cpl}"`);
-    this.logger.log(`[SPIN] Usando numLines da config: ${numLines} (jogo enviou: ${numLinesFromGame})`);
+    this.logger.log(`[SPIN] Game: ${session.gameCode}, betamount="${body.betamount}", numline="${body.numline}", cpl="${body.cpl}"`);
     this.logger.log(`[SPIN] totalBet=${totalBet} (${betAmount} * ${numLines} * ${cpl}), saldoAtual=${session.cachedBalance}, mode=${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
     // =============================================
