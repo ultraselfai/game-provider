@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Param, Body, Logger, Res, NotFoundException } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Post, Param, Body, Logger, Res, Req, NotFoundException } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -169,7 +169,11 @@ export class GamesController {
    * Gera token de teste e cria sessão no banco
    */
   @Get('test/generate-token/:userId/:game')
-  async generateToken(@Param('userId') userId: string, @Param('game') game: string) {
+  async generateToken(
+    @Param('userId') userId: string, 
+    @Param('game') game: string,
+    @Req() req: Request,
+  ) {
     // Busca ou cria agente de teste
     let agent = await this.agentRepository.findOne({ where: { name: 'Test Agent' } });
     if (!agent) {
@@ -206,10 +210,18 @@ export class GamesController {
     
     await this.sessionRepository.save(session);
 
+    // Detecta URL base do request (funciona tanto local quanto produção)
+    const forwardedProto = req.headers['x-forwarded-proto'] as string;
+    const forwardedHost = req.headers['x-forwarded-host'] as string;
+    const hostHeader = req.headers['host'] as string;
+    const protocol = forwardedProto || 'https';
+    const host = forwardedHost || hostHeader || 'api.ultraself.space';
+    const baseUrl = process.env.API_URL || `${protocol}://${host}`;
+
     return {
       success: true,
       token,
-      gameUrl: `http://localhost:3006/originals/${game}/?token=${token}`
+      gameUrl: `${baseUrl}/${game}/?token=${token}`
     };
   }
 
