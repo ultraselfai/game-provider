@@ -77,6 +77,38 @@ export class GameSettings {
   @Column({ name: 'jackpot_grand', type: 'decimal', precision: 12, scale: 2, default: 50000.00 })
   jackpotGrand: number;
 
+  // =============================================
+  // CONFIGURAÇÕES DE PRÊMIOS (Promoções)
+  // =============================================
+
+  // Prêmio máximo por spin (0 = sem limite)
+  @Column({ name: 'max_win_per_spin', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  maxWinPerSpin: number;
+
+  // Multiplicador máximo permitido (0 = usar padrão do jogo)
+  @Column({ name: 'max_multiplier', type: 'decimal', precision: 8, scale: 2, default: 0 })
+  maxMultiplier: number;
+
+  // Multiplicador promocional (aplica sobre os ganhos, 1 = normal, 2 = dobro)
+  @Column({ name: 'promo_multiplier', type: 'decimal', precision: 5, scale: 2, default: 1.00 })
+  promoMultiplier: number;
+
+  // Modo promoção ativo
+  @Column({ name: 'promo_mode', default: false })
+  promoMode: boolean;
+
+  // Nome da promoção (ex: "Natal 2025", "Black Friday")
+  @Column({ name: 'promo_name', length: 100, nullable: true })
+  promoName: string;
+
+  // Data de início da promoção
+  @Column({ name: 'promo_start', type: 'timestamptz', nullable: true })
+  promoStart: Date;
+
+  // Data de fim da promoção
+  @Column({ name: 'promo_end', type: 'timestamptz', nullable: true })
+  promoEnd: Date;
+
   // Metadata
   @Column({ name: 'thumbnail_url', length: 500, nullable: true })
   thumbnailUrl: string;

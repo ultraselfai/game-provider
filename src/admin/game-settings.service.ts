@@ -125,6 +125,15 @@ export class GameSettingsService implements OnModuleInit {
     if (updates.description !== undefined) game.description = updates.description;
     if (updates.thumbnailUrl !== undefined) game.thumbnailUrl = updates.thumbnailUrl;
 
+    // Campos de promoção
+    if (updates.maxWinPerSpin !== undefined) game.maxWinPerSpin = updates.maxWinPerSpin;
+    if (updates.maxMultiplier !== undefined) game.maxMultiplier = updates.maxMultiplier;
+    if (updates.promoMultiplier !== undefined) game.promoMultiplier = updates.promoMultiplier;
+    if (updates.promoMode !== undefined) game.promoMode = updates.promoMode;
+    if (updates.promoName !== undefined) game.promoName = updates.promoName;
+    if (updates.promoStart !== undefined) game.promoStart = updates.promoStart;
+    if (updates.promoEnd !== undefined) game.promoEnd = updates.promoEnd;
+
     await this.gameSettingsRepository.save(game);
     this.logger.log(`Configurações atualizadas para: ${gameCode}`);
 

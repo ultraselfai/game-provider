@@ -356,6 +356,44 @@ export class UpdateGameSettingsDto {
   @IsNumber()
   jackpotGrand?: number;
 
+  // =============================================
+  // CONFIGURAÇÕES DE PRÊMIOS (Promoções)
+  // =============================================
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxWinPerSpin?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxMultiplier?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  promoMultiplier?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  promoMode?: boolean;
+
+  @IsOptional()
+  @IsString()
+  promoName?: string;
+
+  @IsOptional()
+  @IsDateString()
+  promoStart?: string;
+
+  @IsOptional()
+  @IsDateString()
+  promoEnd?: string;
+
   @IsOptional()
   @IsString()
   description?: string;

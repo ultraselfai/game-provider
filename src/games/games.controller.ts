@@ -565,6 +565,35 @@ export class GamesController {
       winChance: agentConfig.winChance,
     });
 
+    // 4.5 APLICA CONFIGURAÇÕES DE PROMOÇÃO (se ativas)
+    const gameSettings = await this.gameSettingsService.getGameByCode(session.gameCode);
+    if (gameSettings && spinResult.totalWin > 0) {
+      const now = new Date();
+      const promoStart = gameSettings.promoStart ? new Date(gameSettings.promoStart) : null;
+      const promoEnd = gameSettings.promoEnd ? new Date(gameSettings.promoEnd) : null;
+      
+      // Verifica se promoção está ativa (modo ativo + dentro do período)
+      const isPromoActive = gameSettings.promoMode && 
+        (!promoStart || now >= promoStart) && 
+        (!promoEnd || now <= promoEnd);
+      
+      if (isPromoActive) {
+        // Aplica multiplicador promocional
+        const promoMultiplier = Number(gameSettings.promoMultiplier) || 1;
+        if (promoMultiplier > 1) {
+          spinResult.totalWin = spinResult.totalWin * promoMultiplier;
+          this.logger.log(`[PROMO] Multiplicador ${promoMultiplier}x aplicado. Novo ganho: ${spinResult.totalWin}`);
+        }
+      }
+
+      // Aplica limite máximo por spin (independente de promoção)
+      const maxWinPerSpin = Number(gameSettings.maxWinPerSpin) || 0;
+      if (maxWinPerSpin > 0 && spinResult.totalWin > maxWinPerSpin) {
+        this.logger.log(`[PROMO] Ganho ${spinResult.totalWin} limitado ao máximo de ${maxWinPerSpin}`);
+        spinResult.totalWin = maxWinPerSpin;
+      }
+    }
+
     // 5. Atualiza Round com resultado
     round.winAmount = spinResult.totalWin;
     round.resultData = spinResult as any;
