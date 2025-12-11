@@ -2866,7 +2866,7 @@ function getApiBase() {
     const hostname = window.location.hostname;
     // Se estiver em produção (não localhost)
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-        return 'https://api.ultraself.space/api/v1';
+        return 'https://api.gameprovider.fun/api/v1';
     }
     // Desenvolvimento local
     return 'http://localhost:3006/api/v1';
