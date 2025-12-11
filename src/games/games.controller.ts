@@ -218,7 +218,7 @@ export class GamesController {
     const hostHeader = req.headers['host'] as string;
     const isLocalhost = hostHeader?.includes('localhost');
     const protocol = forwardedProto || (isLocalhost ? 'http' : 'https');
-    const host = forwardedHost || hostHeader || 'api.ultraself.space';
+    const host = forwardedHost || hostHeader || 'api.gameprovider.fun';
     const baseUrl = process.env.API_URL || `${protocol}://${host}`;
 
     return {
@@ -275,7 +275,7 @@ export class GamesController {
     const hostHeader = req.headers['host'] as string;
     const isLocalhost = hostHeader?.includes('localhost');
     const protocol = forwardedProto || (isLocalhost ? 'http' : 'https');
-    const host = forwardedHost || hostHeader || 'api.ultraself.space';
+    const host = forwardedHost || hostHeader || 'api.gameprovider.fun';
     const baseUrl = process.env.API_URL || `${protocol}://${host}`;
 
     this.logger.log(`[TEST] Token gerado para agente ${agent.name} (${agent.id}), jogo ${game}`);

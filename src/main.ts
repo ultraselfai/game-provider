@@ -14,9 +14,9 @@ async function bootstrap() {
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',
-    'https://console.ultraself.space',
-    'https://app.ultraself.space',
-    'https://api.ultraself.space',
+    'https://console.gameprovider.fun',
+    'https://app.gameprovider.fun',
+    'https://api.gameprovider.fun',
     process.env.ADMIN_URL,
     process.env.AGENT_URL,
   ].filter(Boolean);
