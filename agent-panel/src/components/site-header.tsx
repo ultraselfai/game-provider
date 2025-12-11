@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Wallet } from "lucide-react"
+import { AGENT_API } from "@/lib/config"
 
 interface Agent {
   spinCredits: number
@@ -15,12 +15,37 @@ interface Agent {
 export function SiteHeader() {
   const [agent, setAgent] = React.useState<Agent | null>(null)
 
+  const fetchProfile = React.useCallback(async () => {
+    const token = localStorage.getItem("agentToken")
+    if (!token) return
+
+    try {
+      const res = await fetch(`${AGENT_API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (data.success && data.data) {
+        setAgent(data.data)
+        localStorage.setItem("agentData", JSON.stringify(data.data))
+      }
+    } catch (err) {
+      console.error("Erro ao buscar perfil:", err)
+    }
+  }, [])
+
   React.useEffect(() => {
+    // Carrega dados do localStorage primeiro para exibição imediata
     const agentData = localStorage.getItem("agentData")
     if (agentData) {
       setAgent(JSON.parse(agentData))
     }
-  }, [])
+    // Depois busca dados atualizados da API
+    fetchProfile()
+
+    // Atualiza a cada 30 segundos
+    const interval = setInterval(fetchProfile, 30000)
+    return () => clearInterval(interval)
+  }, [fetchProfile])
 
   const credits = Math.floor(Number(agent?.spinCredits || 0))
 

@@ -161,7 +161,7 @@ export default function DashboardPage() {
             <Wallet className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{credits.toLocaleString('pt-BR')}</div>
+            <div className="text-2xl font-bold text-emerald-500">{credits.toLocaleString('pt-BR')}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Créditos para spins
             </p>
@@ -176,10 +176,10 @@ export default function DashboardPage() {
             <CreditCard className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">
+            <div className="text-2xl font-bold">
               {totalCredits.toLocaleString('pt-BR')}
             </div>
-            <div className="flex items-center gap-1 text-xs text-emerald-500 mt-1">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <ArrowUpRight className="size-3" />
               Créditos adquiridos
             </div>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa GGR
+              GGR
             </CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -216,7 +216,7 @@ export default function DashboardPage() {
               {Number(agent?.ggrRate || 0).toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Receita bruta de jogos
+              Consumo de API do provedor
             </p>
           </CardContent>
         </Card>

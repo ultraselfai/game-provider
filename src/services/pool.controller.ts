@@ -101,42 +101,29 @@ export class PoolController {
         maxAbsolutePayout: Number(pool.maxAbsolutePayout),
         minPoolForPlay: Number(pool.minPoolForPlay),
         
-        // Configurações por fase
-        phases: {
-          retention: {
-            winChance: pool.retentionWinChance,
-            maxMultiplier: pool.retentionMaxMultiplier,
-          },
-          normal: {
-            winChance: pool.normalWinChance,
-            maxMultiplier: pool.normalMaxMultiplier,
-          },
-          release: {
-            winChance: pool.releaseWinChance,
-            maxMultiplier: pool.releaseMaxMultiplier,
-          },
-        },
+        // Configurações por fase - formato compatível com frontend
+        retentionWinChance: pool.retentionWinChance,
+        retentionMaxMultiplier: pool.retentionMaxMultiplier,
+        normalWinChance: pool.normalWinChance,
+        normalMaxMultiplier: pool.normalMaxMultiplier,
+        releaseWinChance: pool.releaseWinChance,
+        releaseMaxMultiplier: pool.releaseMaxMultiplier,
         
-        // Thresholds
-        thresholds: {
-          retention: Number(pool.retentionThreshold),
-          release: Number(pool.releaseThreshold),
-        },
+        // Thresholds - formato compatível com frontend
+        retentionThreshold: Number(pool.retentionThreshold),
+        releaseThreshold: Number(pool.releaseThreshold),
+        
+        // Configurações de fase
+        isAutoPhase: pool.autoPhaseEnabled,
+        autoPhaseEnabled: pool.autoPhaseEnabled,
         
         // Estatísticas
-        stats: {
-          totalBets: Number(pool.totalBets),
-          totalPayouts: Number(pool.totalPayouts),
-          totalSpins: pool.totalSpins,
-          totalWins: pool.totalWins,
-          biggestPayout: Number(pool.biggestPayout),
-          realRtp: pool.realRtp,
-          netProfit: pool.netProfit,
-          winRate: pool.winRate,
-        },
-        
-        // Configurações
-        autoPhaseEnabled: pool.autoPhaseEnabled,
+        totalBets: Number(pool.totalBets),
+        totalPayouts: Number(pool.totalPayouts),
+        totalSpins: pool.totalSpins,
+        totalWins: pool.totalWins,
+        biggestPayout: Number(pool.biggestPayout),
+        biggestWin: Number(pool.biggestPayout),
         
         // Timestamps
         createdAt: pool.createdAt,

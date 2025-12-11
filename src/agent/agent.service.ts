@@ -713,18 +713,22 @@ export class AgentService {
       agentSettings.map(s => [s.gameCode, s])
     );
 
-    // Filtra apenas jogos permitidos para o agente
+    // Se allowedGames está vazio ou undefined, todos os jogos são permitidos
     const allowedGames = agent.allowedGames || [];
+    const allGamesAllowed = allowedGames.length === 0;
     
     // Valores padrão para novos jogos
     const defaultRtp = 96.5;
     const defaultWinChance = 35;
 
+    // Filtra jogos: se allGamesAllowed, inclui todos; senão, apenas os permitidos
+    const filteredGlobalSettings = allGamesAllowed 
+      ? globalSettings 
+      : globalSettings.filter(g => allowedGames.includes(g.gameCode));
+
     // Para cada jogo permitido, retorna a config do agente (ou cria padrão)
     const result = await Promise.all(
-      globalSettings
-        .filter(g => allowedGames.includes(g.gameCode))
-        .map(async (global) => {
+      filteredGlobalSettings.map(async (global) => {
           let agentSetting = agentSettingsMap.get(global.gameCode);
           
           // Se não existe config do agente, cria uma padrão

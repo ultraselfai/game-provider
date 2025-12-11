@@ -774,11 +774,18 @@ export class PoolService {
   ): Promise<{
     period: string;
     balance: number;
-    bets: { count: number; total: number };
-    payouts: { count: number; total: number };
+    totalBets: number;
+    totalPayouts: number;
     netProfit: number;
     rtp: number;
+    totalSpins: number;
+    totalWins: number;
     winRate: number;
+    biggestWin: number;
+    biggestLoss: number;
+    avgBet: number;
+    avgPayout: number;
+    transactionCount: number;
     phaseDistribution: Record<string, number>;
     topPayouts: Array<{ amount: number; gameCode: string; createdAt: Date }>;
   }> {
@@ -800,6 +807,9 @@ export class PoolService {
       case '30d':
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
+      case 'all':
+        startDate = new Date(0); // Desde o início
+        break;
       default:
         startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     }
@@ -814,10 +824,12 @@ export class PoolService {
     });
 
     // Calcula estatísticas
-    let betCount = 0;
-    let betTotal = 0;
-    let payoutCount = 0;
-    let payoutTotal = 0;
+    let totalSpins = 0;
+    let totalBets = 0;
+    let totalWins = 0;
+    let totalPayouts = 0;
+    let biggestWin = 0;
+    let biggestLoss = 0;
     const phaseDistribution: Record<string, number> = {
       retention: 0,
       normal: 0,
@@ -827,16 +839,24 @@ export class PoolService {
 
     for (const tx of transactions) {
       if (tx.type === 'bet') {
-        betCount++;
-        betTotal += Math.abs(Number(tx.amount));
+        totalSpins++;
+        const betAmount = Math.abs(Number(tx.amount));
+        totalBets += betAmount;
+        if (betAmount > biggestLoss) {
+          biggestLoss = betAmount;
+        }
         if (tx.phase) {
           phaseDistribution[tx.phase] = (phaseDistribution[tx.phase] || 0) + 1;
         }
       } else if (tx.type === 'payout') {
-        payoutCount++;
-        payoutTotal += Number(tx.amount);
+        totalWins++;
+        const payoutAmount = Number(tx.amount);
+        totalPayouts += payoutAmount;
+        if (payoutAmount > biggestWin) {
+          biggestWin = payoutAmount;
+        }
         topPayouts.push({
-          amount: Number(tx.amount),
+          amount: payoutAmount,
           gameCode: tx.gameCode || 'unknown',
           createdAt: tx.createdAt,
         });
@@ -847,18 +867,27 @@ export class PoolService {
     topPayouts.sort((a, b) => b.amount - a.amount);
     const limitedTopPayouts = topPayouts.slice(0, 10);
 
-    const netProfit = betTotal - payoutTotal;
-    const rtp = betTotal > 0 ? (payoutTotal / betTotal) * 100 : 0;
-    const winRate = betCount > 0 ? (payoutCount / betCount) * 100 : 0;
+    const netProfit = totalBets - totalPayouts;
+    const rtp = totalBets > 0 ? (totalPayouts / totalBets) * 100 : 0;
+    const winRate = totalSpins > 0 ? (totalWins / totalSpins) * 100 : 0;
+    const avgBet = totalSpins > 0 ? totalBets / totalSpins : 0;
+    const avgPayout = totalWins > 0 ? totalPayouts / totalWins : 0;
 
     return {
       period,
       balance: Number(pool.balance),
-      bets: { count: betCount, total: betTotal },
-      payouts: { count: payoutCount, total: payoutTotal },
+      totalBets,
+      totalPayouts,
       netProfit,
       rtp,
+      totalSpins,
+      totalWins,
       winRate,
+      biggestWin,
+      biggestLoss,
+      avgBet,
+      avgPayout,
+      transactionCount: transactions.length,
       phaseDistribution,
       topPayouts: limitedTopPayouts,
     };

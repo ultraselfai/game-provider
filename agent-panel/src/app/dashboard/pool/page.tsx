@@ -249,19 +249,10 @@ export default function PoolPage() {
             Gerencie a banca e controle de pagamentos do seu cassino
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="flex items-center gap-3 py-3 px-4">
-              <Wallet className="size-5 text-primary" />
-              <div>
-                <p className="text-xs text-muted-foreground">Saldo do Pool</p>
-                <p className={`text-xl font-bold ${(pool?.balance || 0) > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {formatCurrency(pool?.balance || 0)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => loadData()}>
+          <RefreshCw className="size-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       {error && (
@@ -346,40 +337,27 @@ export default function PoolPage() {
           </CardContent>
         </Card>
 
-        {/* Ações Rápidas */}
-        <Card>
+        {/* Ações Rápidas -> Saldo do Pool */}
+        <Card className="border-primary/30 bg-primary/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Ações Rápidas
+              Saldo do Pool
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              onClick={() => {
-                setModalAmount('');
-                setModalDescription('');
-                setModalError('');
-                setModalSuccess('');
-                setShowDepositModal(true);
-              }}
-              className="w-full"
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-center gap-3 py-2">
+              <Wallet className="size-8 text-primary" />
+              <p className={`text-3xl font-bold ${(pool?.balance || 0) > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {formatCurrency(pool?.balance || 0)}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => loadData()}
             >
-              <ArrowDownToLine className="size-4 mr-2" />
-              Depositar
-            </Button>
-            <Button
-              onClick={() => {
-                setModalAmount('');
-                setModalDescription('');
-                setModalError('');
-                setModalSuccess('');
-                setShowWithdrawModal(true);
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              <ArrowUpFromLine className="size-4 mr-2" />
-              Sacar
+              <RefreshCw className="size-4 mr-2" />
+              Atualizar Dados
             </Button>
             <Button variant="secondary" className="w-full" asChild>
               <Link href="/dashboard/pool/transactions">
