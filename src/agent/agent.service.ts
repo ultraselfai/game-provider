@@ -927,4 +927,35 @@ export class AgentService {
       initialCredits: 0,
     });
   }
+
+  // =============================================
+  // DELETE AGENT
+  // =============================================
+  
+  /**
+   * Exclui um agente e todos os dados relacionados
+   */
+  async deleteAgent(agentId: string): Promise<void> {
+    const agent = await this.agentRepo.findOne({ where: { id: agentId } });
+    
+    if (!agent) {
+      throw new NotFoundException('Agente não encontrado');
+    }
+
+    this.logger.log(`[DELETE] Removing agent: ${agent.name} (${agentId})`);
+
+    // Remove transações do agente
+    await this.agentTransactionRepo.delete({ agentId });
+    
+    // Remove configurações de jogos do agente
+    await this.agentGameSettingsRepo.delete({ agentId });
+    
+    // Remove sessões de jogo do agente (fecha as abertas e remove)
+    await this.sessionRepo.delete({ agentId });
+    
+    // Remove o agente
+    await this.agentRepo.delete({ id: agentId });
+
+    this.logger.log(`[DELETE] Agent deleted successfully: ${agent.name}`);
+  }
 }

@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Param,
   Body,
   Headers,
@@ -440,6 +441,25 @@ export class AgentController {
       success: true,
       message: '⚠️ GUARDE O NOVO API SECRET - ele não será mostrado novamente!',
       data: result,
+    };
+  }
+
+  @Delete('agents/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Excluir Agente',
+    description: 'Remove permanentemente um agente e todos os seus dados (transações, sessões, configurações).'
+  })
+  @ApiHeader({ name: 'x-admin-key', required: true })
+  async deleteAgent(
+    @Headers('x-admin-key') adminKey: string,
+    @Param('id') id: string,
+  ) {
+    this.validateAdminKey(adminKey);
+    await this.agentService.deleteAgent(id);
+    return {
+      success: true,
+      message: 'Agente excluído com sucesso',
     };
   }
 

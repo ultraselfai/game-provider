@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, RefreshCw, Search, DollarSign, Gamepad2, Eye, Copy, Check, AlertCircle, Key, Lock, Coins } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Users, Plus, RefreshCw, Search, DollarSign, Gamepad2, Eye, Copy, Check, AlertCircle, Key, Lock, Coins, MoreVertical, Trash2 } from 'lucide-react';
 import { ADMIN_API, AGENT_API, ADMIN_KEY } from '@/lib/config';
 
 interface Agent {
@@ -68,6 +70,8 @@ export default function AgentsPage() {
   const [showCreditModal, setShowCreditModal] = useState<Agent | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState<Agent | null>(null);
   const [showGamesModal, setShowGamesModal] = useState<Agent | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<Agent | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchAgents();
@@ -95,6 +99,29 @@ export default function AgentsPage() {
       agent.name.toLowerCase().includes(search.toLowerCase()) ||
       agent.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  async function handleDeleteAgent() {
+    if (!showDeleteModal) return;
+    
+    setDeleting(true);
+    try {
+      const res = await fetch(`${AGENT_API}/agents/${showDeleteModal.id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-key': ADMIN_KEY },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowDeleteModal(null);
+        fetchAgents();
+      } else {
+        console.error('Failed to delete agent:', data.message);
+      }
+    } catch (err) {
+      console.error('Failed to delete agent:', err);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const stats = {
     totalAgents: agents.length,
@@ -240,9 +267,27 @@ export default function AgentsPage() {
                             <DollarSign className="h-4 w-4 mr-1" />
                             Créditos
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setShowDetailsModal(agent)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setShowDetailsModal(agent)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Ver detalhes
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setShowDeleteModal(agent)}
+                                className="text-red-500 focus:text-red-500"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir agente
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -292,6 +337,35 @@ export default function AgentsPage() {
           }}
         />
       )}
+
+      {/* Modal de confirmação de exclusão */}
+      <AlertDialog open={!!showDeleteModal} onOpenChange={() => setShowDeleteModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Agente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o agente <strong>{showDeleteModal?.name}</strong>?
+              <br /><br />
+              Esta ação é irreversível e irá remover:
+              <ul className="list-disc list-inside mt-2 text-muted-foreground">
+                <li>Todas as transações do agente</li>
+                <li>Todas as sessões de jogo</li>
+                <li>Todas as configurações personalizadas</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAgent}
+              disabled={deleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ProtectedLayout>
   );
 }
