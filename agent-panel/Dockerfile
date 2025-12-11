@@ -33,13 +33,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
 # Copiar arquivos necessários do build
-COPY --from=builder /app/.next/standalone ./
+# Nota: standalone gera estrutura com subpasta do nome do projeto
+COPY --from=builder /app/.next/standalone/agent-panel ./
+COPY --from=builder /app/.next/standalone/node_modules ./node_modules
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copiar middleware se existir (necessário para autenticação)
-COPY --from=builder /app/.next/server/middleware*.* ./.next/server/
-
-# Copiar public se existir (pode estar vazio)
+# Copiar public (essencial para imagens e assets estáticos)
 COPY --from=builder /app/public ./public
 
 # Ajustar permissões
