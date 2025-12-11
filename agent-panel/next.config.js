@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+
+  // Configuração de imagens para standalone/Docker
+  images: {
+    unoptimized: true,
+  },
   
   // Proxy para API backend
   async rewrites() {

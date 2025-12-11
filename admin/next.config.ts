@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
 
+  // Configuração de imagens para standalone/Docker
+  images: {
+    unoptimized: true,
+  },
+
   // Configurações para conexão com API backend
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
