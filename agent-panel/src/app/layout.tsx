@@ -5,6 +5,11 @@ import { ThemeProvider } from '@/components/theme-provider';
 export const metadata: Metadata = {
   title: 'Painel do Agente - Game Provider',
   description: 'Gerencie sua integração com o provedor de jogos',
+  icons: {
+    icon: '/game-provider-simbol.png',
+    shortcut: '/game-provider-simbol.png',
+    apple: '/game-provider-simbol.png',
+  },
 };
 
 export default function RootLayout({

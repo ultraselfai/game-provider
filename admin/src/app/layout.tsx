@@ -10,6 +10,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Game Provider Admin',
   description: 'Painel administrativo do Game Provider Engine',
+  icons: {
+    icon: '/game-provider-simbol.png',
+    shortcut: '/game-provider-simbol.png',
+    apple: '/game-provider-simbol.png',
+  },
 };
 
 export default function RootLayout({
