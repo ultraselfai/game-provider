@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'Painel do Agente - Game Provider',
@@ -12,9 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-slate-900 text-white antialiased">
-        {children}
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider defaultTheme="dark" storageKey="agent-panel-theme">
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

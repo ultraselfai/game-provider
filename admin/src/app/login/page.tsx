@@ -2,6 +2,10 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 // Helper function to set cookie
 function setCookie(name: string, value: string, days: number) {
@@ -24,7 +28,6 @@ function LoginForm() {
     setError(null);
 
     // Admin credentials (in production, validate against backend)
-    // For now, using simple credentials
     if (email === 'admin@gameprovider.com' && password === 'admin123') {
       // Store auth token in cookie (accessible by proxy/middleware)
       setCookie('admin_token', 'admin-authenticated', 7);
@@ -44,90 +47,118 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="admin@gameprovider.com"
-          className="w-full rounded-lg bg-slate-900 border border-slate-600 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">
-          Senha
-        </label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          className="w-full rounded-lg bg-slate-900 border border-slate-600 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
-        />
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
-          {error}
+    <form onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden">
+              <Image
+                src="/game-provider-simbol.png"
+                alt="Game Provider"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-xl font-semibold">Game Provider</span>
+          </div>
         </div>
-      )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-emerald-600 py-3 font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            Entrando...
-          </span>
-        ) : (
-          'Entrar'
+        {/* Header */}
+        <div className="flex flex-col items-center text-center">
+          <h1 className="text-2xl font-bold">Painel Admin</h1>
+          <p className="text-muted-foreground text-balance">
+            Acesse o painel administrativo
+          </p>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive text-sm">
+            {error}
+          </div>
         )}
-      </button>
+
+        {/* Email */}
+        <div className="grid gap-2">
+          <label htmlFor="email" className="text-sm font-medium">
+            E-mail
+          </label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="admin@gameprovider.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Password */}
+        <div className="grid gap-2">
+          <label htmlFor="password" className="text-sm font-medium">
+            Senha
+          </label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-10 px-4 py-2 rounded-md text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 mr-2 animate-spin" />
+              Entrando...
+            </>
+          ) : (
+            'Entrar'
+          )}
+        </button>
+      </div>
     </form>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-600/20 mb-4">
-            <span className="text-5xl">🎰</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Game Provider</h1>
-          <p className="text-slate-400 mt-1">Painel Administrativo</p>
+    <div className="bg-background flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm md:max-w-4xl">
+        <div className="flex flex-col gap-6">
+          <Card className="overflow-hidden p-0">
+            <CardContent className="grid p-0 md:grid-cols-2">
+              <div className="p-6 md:p-8">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="size-8 animate-spin text-muted-foreground" />
+                  </div>
+                }>
+                  <LoginForm />
+                </Suspense>
+              </div>
+
+              {/* Side Image */}
+              <div className="relative hidden md:block overflow-hidden">
+                <Image
+                  src="/capa-admin.png"
+                  alt="Game Provider Admin"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Login Card */}
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-8">
-          <h2 className="text-xl font-semibold text-white mb-6">Entrar</h2>
-          
-          <Suspense fallback={<div className="text-center text-slate-400">Carregando...</div>}>
-            <LoginForm />
-          </Suspense>
-
-          <div className="mt-6 p-3 rounded-lg bg-slate-700/50 text-sm text-slate-400">
-            <p className="font-medium text-slate-300 mb-1">🔑 Credenciais de Teste:</p>
-            <p>Email: admin@gameprovider.com</p>
-            <p>Senha: admin123</p>
-          </div>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-slate-500">
-          © 2024 Game Provider. Todos os direitos reservados.
-        </p>
       </div>
     </div>
   );

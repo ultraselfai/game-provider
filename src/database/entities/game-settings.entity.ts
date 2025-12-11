@@ -43,9 +43,21 @@ export class GameSettings {
   @Column({ name: 'default_bet', type: 'decimal', precision: 12, scale: 6, default: 1.00 })
   defaultBet: number;
 
-  // Bet sizes available (JSON array)
+  // Bet sizes available (JSON array) - valores finais para validação
   @Column({ name: 'bet_sizes', type: 'jsonb', default: '[0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 20.00, 50.00, 100.00]' })
   betSizes: number[];
+
+  // Base bets (valores base que o jogo multiplica por level × lines)
+  @Column({ name: 'base_bets', type: 'jsonb', default: '[0.08, 0.80, 3.00, 10.00]', nullable: true })
+  baseBets: number[];
+
+  // Nível máximo de aposta (1-10, etc)
+  @Column({ name: 'max_level', type: 'integer', default: 10, nullable: true })
+  maxLevel: number;
+
+  // Número de linhas (paylines) do jogo
+  @Column({ name: 'num_lines', type: 'integer', default: 5, nullable: true })
+  numLines: number;
 
   // Win/Loss Chance (for predefined results selection)
   @Column({ name: 'win_chance', type: 'integer', default: 35 })

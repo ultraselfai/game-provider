@@ -113,6 +113,9 @@ export class GameSettingsService implements OnModuleInit {
     if (updates.maxBet !== undefined) game.maxBet = updates.maxBet;
     if (updates.defaultBet !== undefined) game.defaultBet = updates.defaultBet;
     if (updates.betSizes !== undefined) game.betSizes = updates.betSizes;
+    if (updates.baseBets !== undefined) game.baseBets = updates.baseBets;
+    if (updates.maxLevel !== undefined) game.maxLevel = updates.maxLevel;
+    if (updates.numLines !== undefined) game.numLines = updates.numLines;
     if (updates.winChance !== undefined) game.winChance = updates.winChance;
     if (updates.loseChance !== undefined) game.loseChance = updates.loseChance;
     if (updates.hasFreeSpin !== undefined) game.hasFreeSpin = updates.hasFreeSpin;
@@ -161,6 +164,8 @@ export class GameSettingsService implements OnModuleInit {
     maxBet: number;
     defaultBet: number;
     betSizes: number[];
+    baseBets: number[];
+    maxLevel: number;
     rtp: number;
     winChance: number;
     loseChance: number;
@@ -171,7 +176,7 @@ export class GameSettingsService implements OnModuleInit {
     });
 
     const staticConfig = GAME_CONFIGS[gameCode];
-    const numLines = this.getNumLines(gameCode);
+    const defaultNumLines = this.getNumLines(gameCode);
 
     if (dbSettings) {
       // Passa valores diretamente do DB (sem conversão)
@@ -179,11 +184,13 @@ export class GameSettingsService implements OnModuleInit {
         minBet: Number(dbSettings.minBet),
         maxBet: Number(dbSettings.maxBet),
         defaultBet: Number(dbSettings.defaultBet),
-        betSizes: dbSettings.betSizes,
+        betSizes: dbSettings.betSizes || [],
+        baseBets: dbSettings.baseBets || [0.08, 0.80, 3.00, 10.00],
+        maxLevel: dbSettings.maxLevel || 10,
         rtp: Number(dbSettings.rtp),
         winChance: dbSettings.winChance,
         loseChance: dbSettings.loseChance,
-        numLines,
+        numLines: dbSettings.numLines || defaultNumLines,
       };
     }
 
@@ -193,10 +200,12 @@ export class GameSettingsService implements OnModuleInit {
         maxBet: staticConfig.maxBet,
         defaultBet: staticConfig.defaultBet,
         betSizes: staticConfig.betSizes,
+        baseBets: [0.08, 0.80, 3.00, 10.00], // Default para Fortune Tiger
+        maxLevel: 10,
         rtp: staticConfig.baseRtp,
         winChance: staticConfig.winChance,
         loseChance: staticConfig.loseChance,
-        numLines,
+        numLines: staticConfig.numLines || defaultNumLines,
       };
     }
 
@@ -206,10 +215,12 @@ export class GameSettingsService implements OnModuleInit {
       maxBet: 500,
       defaultBet: 1.00,
       betSizes: [0.20, 0.50, 1.00, 2.00, 5.00, 10.00, 20.00, 50.00, 100.00],
+      baseBets: [0.08, 0.80, 3.00, 10.00],
+      maxLevel: 10,
       rtp: 96.5,
       winChance: 35,
       loseChance: 65,
-      numLines,
+      numLines: defaultNumLines,
     };
   }
 }

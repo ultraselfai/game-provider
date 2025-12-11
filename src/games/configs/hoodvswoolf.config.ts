@@ -2,9 +2,32 @@ import { GameConfig, PredefinedResult, SymbolConfig, PaylineConfig } from '../..
 
 /**
  * Configuração do Hood vs Wolf
- * Grid: 5x3, 243 ways
+ * Grid: 5x3, 10 paylines
  * Tema: Chapeuzinho Vermelho vs Lobo
+ * 
+ * Estrutura de Apostas (igual ao original PG Soft):
+ * BaseBets: R$0.01, R$0.05, R$0.15, R$1.25
+ * Níveis: 1-10
+ * Linhas: 10
+ * Fórmula: BaseBet × Level × Lines = Total Bet
  */
+
+// Base bets disponíveis (valores que o jogador vê no seletor)
+const BASE_BETS = [0.01, 0.05, 0.15, 1.25];
+const MAX_LEVEL = 10;
+const NUM_LINES = 10;
+
+// Gera betSizes calculados (BaseBet × Level × Lines)
+function generateBetSizes(): number[] {
+  const sizes: number[] = [];
+  for (const base of BASE_BETS) {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      const total = base * level * NUM_LINES;
+      sizes.push(Math.round(total * 100) / 100);
+    }
+  }
+  return [...new Set(sizes)].sort((a, b) => a - b);
+}
 
 const SYMBOLS: SymbolConfig[] = [
   {
@@ -304,11 +327,13 @@ export const HOOD_VS_WOLF_CONFIG: GameConfig = {
   loseChance: 62,
   predefinedWins: PREDEFINED_WINS,
   predefinedLosses: PREDEFINED_LOSSES,
-  minBet: 0.20,
-  maxBet: 100,
-  defaultBet: 0.20,
-  betSizes: [0.20, 2, 20, 100],
-  numLines: 243,
+  minBet: 0.10,   // 0.01 × 1 × 10
+  maxBet: 125,    // 1.25 × 10 × 10
+  defaultBet: 0.10,
+  betSizes: generateBetSizes(),
+  baseBets: BASE_BETS,
+  maxLevel: MAX_LEVEL,
+  numLines: NUM_LINES,
   hasFreeSpin: true,
   hasBonusGame: false,
   hasJackpot: false,

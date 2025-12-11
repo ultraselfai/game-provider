@@ -266,6 +266,29 @@ const PREDEFINED_LOSSES: PredefinedResult[] = [
   { icons: ['Symbol_2', 'Symbol_3', 'Symbol_0', 'Symbol_5', 'Symbol_3', 'Symbol_4', 'Symbol_1', 'Symbol_0', 'Symbol_5'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
 ];
 
+/**
+ * Configuração de apostas Fortune Panda (igual Fortune Tiger)
+ * 
+ * BaseBets: R$0.08, R$0.80, R$3.00, R$10.00
+ * Níveis: 1 a 10
+ * Linhas: 5
+ * Fórmula: BaseBet × Nível × Linhas = Aposta Total
+ */
+const BASE_BETS = [0.08, 0.80, 3.00, 10.00];
+const MAX_LEVEL = 10;
+const NUM_LINES = 5;
+
+function generateBetSizes(): number[] {
+  const sizes: number[] = [];
+  for (const base of BASE_BETS) {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      const total = base * level * NUM_LINES;
+      sizes.push(Math.round(total * 100) / 100);
+    }
+  }
+  return [...new Set(sizes)].sort((a, b) => a - b);
+}
+
 export const FORTUNE_PANDA_CONFIG: GameConfig = {
   gameId: 'fortunepanda',
   gameName: 'Fortune Panda',
@@ -279,11 +302,11 @@ export const FORTUNE_PANDA_CONFIG: GameConfig = {
   loseChance: 55,
   predefinedWins: PREDEFINED_WINS,
   predefinedLosses: PREDEFINED_LOSSES,
-  minBet: 0.20,
-  maxBet: 100,
-  defaultBet: 0.20,
-  betSizes: [0.20, 2, 20, 100],
-  numLines: 5,
+  minBet: 0.40,
+  maxBet: 500,
+  defaultBet: 0.40,
+  betSizes: generateBetSizes(),
+  numLines: NUM_LINES,
   hasFreeSpin: false,
   hasBonusGame: false,
   hasJackpot: false,

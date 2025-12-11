@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import AdminHeader from '@/components/AdminHeader';
-import { AGENT_API, ADMIN_API, ADMIN_KEY } from '@/lib/config';
+import { useEffect, useState } from 'react';
+import ProtectedLayout from '@/components/ProtectedLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Plus, RefreshCw, Search, DollarSign, Gamepad2, Eye, Copy, Check, AlertCircle, Key, Lock, Coins } from 'lucide-react';
+import { ADMIN_API, AGENT_API, ADMIN_KEY } from '@/lib/config';
 
 interface Agent {
   id: string;
@@ -26,250 +34,236 @@ interface Agent {
   lastLoginAt?: string;
 }
 
-interface Game {
-  id: string;
-  gameCode: string;
-  gameName: string;
-  provider: string;
-  rtp: number;
-  volatility: string;
-  isActive: boolean;
-}
-
 interface AgentTransaction {
   id: string;
   type: string;
   amount: number;
-  previousBalance: number;
-  newBalance: number;
   description?: string;
-  reference?: string;
-  createdBy?: string;
   createdAt: string;
 }
+
+interface Game {
+  gameCode: string;
+  gameName: string;
+  provider: string;
+  rtp: number;
+}
+
+// Apenas jogos validados e funcionais
+const ALLOWED_GAMES = [
+  'fortunetiger',
+  'fortunemouse',
+  'fortunerabbit',
+  'fortuneox',
+  'fortunepanda',
+  'phoenixrises',
+  'hoodvswoolf',
+];
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState<Agent | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState<Agent | null>(null);
   const [showGamesModal, setShowGamesModal] = useState<Agent | null>(null);
 
-  const fetchAgents = useCallback(async () => {
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  async function fetchAgents() {
+    setLoading(true);
     try {
-      setError(null);
       const res = await fetch(`${AGENT_API}/agents`, {
         headers: { 'x-admin-key': ADMIN_KEY },
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setAgents(data.data);
-      } else if (Array.isArray(data.data)) {
-        setAgents(data.data);
-      } else if (Array.isArray(data)) {
-        setAgents(data);
-      } else {
-        setError('Falha ao carregar agentes');
       }
-    } catch {
-      setError('Erro de conexão com a API');
+    } catch (err) {
+      console.error('Failed to fetch agents:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => {
-    fetchAgents();
-  }, [fetchAgents]);
+  const filteredAgents = agents.filter(
+    (agent) =>
+      agent.name.toLowerCase().includes(search.toLowerCase()) ||
+      agent.email.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const totalCredits = agents.reduce((sum, a) => sum + Number(a.spinCredits || 0), 0);
-  const activeAgents = agents.filter(a => a.isActive).length;
+  const stats = {
+    totalAgents: agents.length,
+    activeAgents: agents.filter((a) => a.isActive).length,
+    totalSpins: agents.reduce((sum, a) => sum + Number(a.totalSpinsConsumed || 0), 0),
+  };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      <AdminHeader />
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-6 flex items-center justify-between">
+    <ProtectedLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-white">Agentes</h2>
-            <p className="text-slate-400 text-sm mt-1">Gerencie seus agentes, créditos de spin e jogos liberados</p>
+            <h1 className="text-2xl font-bold">Agentes</h1>
+            <p className="text-muted-foreground">Gerencie os agentes parceiros da plataforma</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/20"
-          >
-            <span>➕</span> Novo Agente
-          </button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={fetchAgents} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Agente
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-emerald-500/30 bg-linear-to-br from-emerald-500/20 to-emerald-600/10 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">👥</span>
-              <div>
-                <p className="text-sm text-slate-400">Total Agentes</p>
-                <p className="text-2xl font-bold text-white">{agents.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-blue-500/30 bg-linear-to-br from-blue-500/20 to-blue-600/10 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <div>
-                <p className="text-sm text-slate-400">Ativos</p>
-                <p className="text-2xl font-bold text-white">{activeAgents}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl border border-amber-500/30 bg-linear-to-br from-amber-500/20 to-amber-600/10 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎰</span>
-              <div>
-                <p className="text-sm text-slate-400">Total Spins Disponíveis</p>
-                <p className="text-2xl font-bold text-white">
-                  {totalCredits.toLocaleString('pt-BR')}
-                </p>
-              </div>
-            </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Agentes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalAgents}</div>
+              <p className="text-xs text-muted-foreground">registrados na plataforma</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Agentes Ativos</CardTitle>
+              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-500">{stats.activeAgents}</div>
+              <p className="text-xs text-muted-foreground">operando ativamente</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Créditos Consumidos</CardTitle>
+              <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalSpins.toLocaleString('pt-BR')}</div>
+              <p className="text-xs text-muted-foreground">créditos utilizados</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search */}
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar agente..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-500/20 border border-red-500/50 p-4 text-red-300 flex items-center gap-2">
-            <span>⚠️</span> {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-800">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Agente</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Contato</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-slate-300">Spins</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-slate-300">Jogos</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-slate-300">Status</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-slate-300">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agents.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-4xl">👤</span>
-                        <p>Nenhum agente cadastrado</p>
-                        <button
-                          onClick={() => setShowCreateModal(true)}
-                          className="mt-2 text-emerald-400 hover:text-emerald-300"
-                        >
-                          Criar primeiro agente →
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  agents.map((agent) => (
-                    <tr key={agent.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
-                      <td className="px-6 py-4">
+        {/* Agents Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Lista de Agentes</CardTitle>
+            <CardDescription>
+              {filteredAgents.length} agente{filteredAgents.length !== 1 ? 's' : ''} encontrado{filteredAgents.length !== 1 ? 's' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredAgents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum agente encontrado</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Agente</TableHead>
+                    <TableHead className="text-right">Saldo / Créditos</TableHead>
+                    <TableHead className="text-center">Jogos</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAgents.map((agent) => (
+                    <TableRow key={agent.id}>
+                      <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-linear-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold">
                             {agent.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-white">{agent.name}</p>
-                            <code className="text-xs text-slate-500">{agent.apiKey.slice(0, 16)}...</code>
+                            <p className="font-medium">{agent.name}</p>
+                            <p className="text-sm text-muted-foreground">{agent.email}</p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-slate-300">{agent.email}</p>
-                        {agent.phone && <p className="text-xs text-slate-500">{agent.phone}</p>}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <p className={`text-lg font-bold ${Number(agent.spinCredits) > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                          🎰 {Number(agent.spinCredits || 0).toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <p className={`text-lg font-bold flex items-center justify-end gap-1.5 ${(Number(agent.spinCredits) || 0) > 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          <Coins className="h-4 w-4" />
+                          {(Number(agent.spinCredits) || 0).toLocaleString('pt-BR')} créditos
                         </p>
-                        <p className="text-xs text-slate-500">
-                          Usados: {Number(agent.totalSpinsConsumed || 0).toLocaleString('pt-BR')}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          agent.allowedGames?.length === 0
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-purple-500/20 text-purple-300'
-                        }`}>
-                          {agent.allowedGames?.length === 0 ? '🎮 Todos' : `🎮 ${agent.allowedGames?.length}`}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                          agent.isActive
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${agent.isActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                        <p className="text-xs text-muted-foreground">GGR: 10%</p>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/50">
+                          PGSOFT
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={agent.isActive ? 'default' : 'destructive'} className={agent.isActive ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' : ''}>
+                          <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${agent.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
                           {agent.isActive ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setShowGamesModal(agent)}
-                            className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-500 transition"
-                            title="Gerenciar Jogos"
-                          >
-                            🎮 Jogos
-                          </button>
-                          <button
-                            onClick={() => setShowCreditModal(agent)}
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 transition"
-                            title="Adicionar Crédito"
-                          >
-                            🎰 Spins
-                          </button>
-                          <button
-                            onClick={() => setShowDetailsModal(agent)}
-                            className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600 transition"
-                            title="Ver Detalhes"
-                          >
-                            👁️
-                          </button>
+                          <Button variant="outline" size="sm" onClick={() => setShowGamesModal(agent)}>
+                            <Gamepad2 className="h-4 w-4 mr-1" />
+                            Jogos
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setShowCreditModal(agent)} className="text-emerald-500 border-emerald-500/50 hover:bg-emerald-500/10">
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            Créditos
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setShowDetailsModal(agent)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </main>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <CreateAgentModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={() => {
-            setShowCreateModal(false);
-            fetchAgents();
-          }}
-        />
-      )}
+      {/* Modals */}
+      <CreateAgentModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          setShowCreateModal(false);
+          fetchAgents();
+        }}
+      />
 
-      {/* Credit Modal */}
       {showCreditModal && (
         <CreditModal
           agent={showCreditModal}
@@ -281,7 +275,6 @@ export default function AgentsPage() {
         />
       )}
 
-      {/* Details Modal */}
       {showDetailsModal && (
         <AgentDetailsModal
           agent={showDetailsModal}
@@ -289,7 +282,6 @@ export default function AgentsPage() {
         />
       )}
 
-      {/* Games Modal */}
       {showGamesModal && (
         <GamesModal
           agent={showGamesModal}
@@ -300,7 +292,7 @@ export default function AgentsPage() {
           }}
         />
       )}
-    </div>
+    </ProtectedLayout>
   );
 }
 
@@ -308,9 +300,11 @@ export default function AgentsPage() {
 // MODAL: Criar Agente
 // =====================================================
 function CreateAgentModal({
+  open,
   onClose,
   onCreated,
 }: {
+  open: boolean;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -323,6 +317,22 @@ function CreateAgentModal({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ apiKey: string; apiSecret: string; id: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function resetForm() {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setPhone('');
+    setGgrRate('10');
+    setInitialBalance('');
+    setResult(null);
+    setError(null);
+  }
+
+  function handleClose() {
+    resetForm();
+    onClose();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -364,175 +374,127 @@ function CreateAgentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="max-w-lg">
         {result ? (
           <>
-            <div className="mb-4 flex items-center gap-2 text-emerald-400">
-              <span className="text-2xl">✅</span>
-              <h3 className="text-lg font-semibold">Agente Criado com Sucesso!</h3>
-            </div>
-            <div className="mb-4 rounded-lg bg-amber-500/20 border border-amber-500/50 p-3">
-              <p className="text-sm text-amber-300">
-                ⚠️ <strong>IMPORTANTE:</strong> Guarde o API Secret abaixo. Ele <strong>NÃO</strong> será mostrado novamente!
-              </p>
-            </div>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-500">
+                <Check className="h-5 w-5" />
+                Agente Criado com Sucesso!
+              </DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-400 font-medium">API Key</label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    readOnly
-                    value={result.apiKey}
-                    className="flex-1 rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-emerald-400 font-mono"
-                  />
-                  <button
-                    onClick={() => navigator.clipboard.writeText(result.apiKey)}
-                    className="rounded-lg bg-slate-700 px-3 py-2 text-slate-300 hover:bg-slate-600 transition"
-                  >
-                    📋
-                  </button>
-                </div>
+              <div className="rounded-lg bg-amber-500/20 border border-amber-500/50 p-3">
+                <p className="text-sm text-amber-500 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <strong>IMPORTANTE:</strong> Guarde o API Secret abaixo. Ele <strong>NÃO</strong> será mostrado novamente!
+                </p>
               </div>
-              <div>
-                <label className="text-xs text-slate-400 font-medium">API Secret</label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    readOnly
-                    value={result.apiSecret}
-                    className="flex-1 rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-amber-400 font-mono"
-                  />
-                  <button
-                    onClick={() => navigator.clipboard.writeText(result.apiSecret)}
-                    className="rounded-lg bg-slate-700 px-3 py-2 text-slate-300 hover:bg-slate-600 transition"
-                  >
-                    📋
-                  </button>
-                </div>
-              </div>
+              <CopyField label="API Key" value={result.apiKey} className="text-emerald-500" />
+              <CopyField label="API Secret" value={result.apiSecret} className="text-amber-500" />
+              <Button onClick={() => { resetForm(); onCreated(); }} className="w-full">
+                Entendi, salvei as credenciais
+              </Button>
             </div>
-            <button
-              onClick={onCreated}
-              className="mt-6 w-full rounded-lg bg-emerald-600 py-2.5 font-medium text-white hover:bg-emerald-500 transition"
-            >
-              Entendi, salvei as credenciais
-            </button>
           </>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Novo Agente</h3>
-              <button onClick={onClose} className="text-slate-400 hover:text-white transition">
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="text-sm text-slate-300 font-medium">Nome *</label>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Ex: Casa de Apostas XYZ"
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 font-medium">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="agente@email.com"
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 font-medium">Senha *</label>
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 font-medium">Telefone</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="(11) 99999-9999"
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-300 font-medium">Taxa GGR (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={ggrRate}
-                      onChange={(e) => setGgrRate(e.target.value)}
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-sm text-slate-300 font-medium">Saldo Inicial (R$)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={initialBalance}
-                      onChange={(e) => setInitialBalance(e.target.value)}
-                      placeholder="0.00 (opcional)"
-                      className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </div>
+            <DialogHeader>
+              <DialogTitle>Novo Agente</DialogTitle>
+              <DialogDescription>Preencha os dados para criar um novo agente parceiro</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="text-sm font-medium">Nome *</label>
+                  <Input
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Ex: Casa de Apostas XYZ"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email *</label>
+                  <Input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="agente@email.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Senha *</label>
+                  <Input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Telefone</label>
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Taxa GGR (%)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={ggrRate}
+                    onChange={(e) => setGgrRate(e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-medium">Saldo Inicial (R$)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={initialBalance}
+                    onChange={(e) => setInitialBalance(e.target.value)}
+                    placeholder="0.00 (opcional)"
+                  />
                 </div>
               </div>
 
               {error && (
-                <div className="mt-4 rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
-                  ⚠️ {error}
+                <div className="rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-500 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
                 </div>
               )}
 
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 rounded-lg border border-slate-600 py-2.5 text-slate-300 hover:bg-slate-700 transition"
-                >
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleClose}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 rounded-lg bg-emerald-600 py-2.5 font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50"
-                >
+                </Button>
+                <Button type="submit" disabled={loading}>
                   {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                       Criando...
-                    </span>
+                    </>
                   ) : (
                     'Criar Agente'
                   )}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -595,143 +557,115 @@ function CreditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white">Gerenciar Spins</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition">
-            ✕
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Gerenciar Créditos</DialogTitle>
+          <DialogDescription>Adicionar ou remover créditos do agente</DialogDescription>
+        </DialogHeader>
 
         {/* Agent Info */}
-        <div className="mb-6 rounded-lg bg-slate-700/50 p-4">
+        <div className="rounded-lg bg-muted p-4">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-linear-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
               {agent.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-medium text-white">{agent.name}</p>
-              <p className="text-sm text-slate-400">
-                Spins disponíveis: <span className="text-emerald-400 font-semibold">🎰 {Number(agent.spinCredits || 0).toLocaleString('pt-BR')}</span>
+              <p className="font-medium">{agent.name}</p>
+              <p className="text-sm text-muted-foreground">
+                Créditos disponíveis: <span className="text-emerald-500 font-semibold inline-flex items-center gap-1"><Coins className="h-3.5 w-3.5" /> {Number(agent.spinCredits || 0).toLocaleString('pt-BR')}</span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Operation Toggle */}
-        <div className="mb-4 flex rounded-lg bg-slate-900 p-1">
-          <button
-            type="button"
-            onClick={() => setOperation('add')}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-              operation === 'add'
-                ? 'bg-emerald-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            ➕ Adicionar
-          </button>
-          <button
-            type="button"
-            onClick={() => setOperation('remove')}
-            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-              operation === 'remove'
-                ? 'bg-red-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            ➖ Remover
-          </button>
-        </div>
+        <Tabs value={operation} onValueChange={(v) => setOperation(v as 'add' | 'remove')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="add">➕ Adicionar</TabsTrigger>
+            <TabsTrigger value="remove">➖ Remover</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-slate-300 font-medium">Quantidade de Spins *</label>
-              <input
-                type="number"
-                required
-                min="1"
-                step="1"
-                value={credits}
-                onChange={(e) => setCredits(e.target.value)}
-                placeholder="0"
-                className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-3 text-xl text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-center font-bold"
-              />
-              <p className="mt-1 text-xs text-slate-500 text-center">1 spin = 1 jogada do jogador</p>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Quantidade de Créditos *</label>
+            <Input
+              type="number"
+              required
+              min="1"
+              step="1"
+              value={credits}
+              onChange={(e) => setCredits(e.target.value)}
+              placeholder="0"
+              className="text-xl text-center font-bold mt-1"
+            />
+            <p className="text-xs text-muted-foreground text-center mt-1">1 crédito = 1 jogada do jogador</p>
+          </div>
 
-            {/* Quick Amount Buttons */}
-            <div className="flex flex-wrap gap-2">
-              {quickAmounts.map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setCredits(val.toString())}
-                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-600 transition"
-                >
-                  🎰 {val.toLocaleString('pt-BR')}
-                </button>
-              ))}
-            </div>
+          {/* Quick Amount Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {quickAmounts.map((val) => (
+              <Button
+                key={val}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCredits(val.toString())}
+              >
+              <Coins className="h-3.5 w-3.5 mr-1" />
+                {val.toLocaleString('pt-BR')}
+              </Button>
+            ))}
+          </div>
 
-            <div>
-              <label className="text-sm text-slate-300 font-medium">Descrição</label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Compra via PIX #12345"
-                className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2.5 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
+          <div>
+            <label className="text-sm font-medium">Descrição</label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ex: Compra via PIX #12345"
+            />
           </div>
 
           {error && (
-            <div className="mt-4 rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
-              ⚠️ {error}
+            <div className="rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-500 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {error}
             </div>
           )}
 
           {success && (
-            <div className="mt-4 rounded-lg bg-emerald-500/20 border border-emerald-500/50 p-3 text-sm text-emerald-300">
-              ✅ {success}
+            <div className="rounded-lg bg-emerald-500/20 border border-emerald-500/50 p-3 text-sm text-emerald-500 flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              {success}
             </div>
           )}
 
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-slate-600 py-2.5 text-slate-300 hover:bg-slate-700 transition"
-            >
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading || !credits}
-              className={`flex-1 rounded-lg py-2.5 font-medium text-white transition disabled:opacity-50 ${
-                operation === 'add'
-                  ? 'bg-emerald-600 hover:bg-emerald-500'
-                  : 'bg-red-600 hover:bg-red-500'
-              }`}
+              variant={operation === 'remove' ? 'destructive' : 'default'}
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   Processando...
-                </span>
+                </>
               ) : operation === 'add' ? (
-                `Adicionar ${credits || '0'} spins`
+                `Adicionar ${credits || '0'} créditos`
               ) : (
-                `Remover ${credits || '0'} spins`
+                `Remover ${credits || '0'} créditos`
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -747,9 +681,6 @@ function AgentDetailsModal({
 }) {
   const [transactions, setTransactions] = useState<AgentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  
-  // Password reset state
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -774,12 +705,6 @@ function AgentDetailsModal({
     } finally {
       setLoading(false);
     }
-  }
-
-  function copyToClipboard(text: string, key: string) {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
   }
 
   async function handleResetPassword(e: React.FormEvent) {
@@ -818,7 +743,7 @@ function AgentDetailsModal({
       } else {
         setPasswordMessage({ type: 'error', text: data.message || 'Erro ao alterar senha' });
       }
-    } catch (err) {
+    } catch {
       setPasswordMessage({ type: 'error', text: 'Erro de conexão' });
     } finally {
       setPasswordLoading(false);
@@ -826,176 +751,152 @@ function AgentDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white">Detalhes do Agente</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition">
-            ✕
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalhes do Agente</DialogTitle>
+        </DialogHeader>
 
         {/* Agent Header */}
-        <div className="mb-6 rounded-lg bg-slate-700/50 p-4">
+        <div className="rounded-lg bg-muted p-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-linear-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-2xl">
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-2xl">
               {agent.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">
-              <h4 className="text-xl font-bold text-white">{agent.name}</h4>
-              <p className="text-slate-400">{agent.email}</p>
-              {agent.phone && <p className="text-sm text-slate-500">{agent.phone}</p>}
+              <h4 className="text-xl font-bold">{agent.name}</h4>
+              <p className="text-muted-foreground">{agent.email}</p>
+              {agent.phone && <p className="text-sm text-muted-foreground">{agent.phone}</p>}
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-400">Saldo</p>
-              <p className="text-2xl font-bold text-emerald-400">
-                R$ {Number(agent.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <p className="text-sm text-muted-foreground">Saldo</p>
+              <p className="text-2xl font-bold text-emerald-500">
+                R$ {(Number(agent.balance) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-6 grid grid-cols-4 gap-3">
-          <div className="rounded-lg bg-slate-700/30 p-3 text-center">
-            <p className="text-xs text-slate-400">GGR Rate</p>
-            <p className="text-lg font-bold text-purple-400">{agent.ggrRate}%</p>
-          </div>
-          <div className="rounded-lg bg-slate-700/30 p-3 text-center">
-            <p className="text-xs text-slate-400">Total Depositado</p>
-            <p className="text-lg font-bold text-emerald-400">R$ {Number(agent.totalDeposited).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </div>
-          <div className="rounded-lg bg-slate-700/30 p-3 text-center">
-            <p className="text-xs text-slate-400">Total Apostado</p>
-            <p className="text-lg font-bold text-blue-400">R$ {Number(agent.totalWagered).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </div>
-          <div className="rounded-lg bg-slate-700/30 p-3 text-center">
-            <p className="text-xs text-slate-400">Total Ganho</p>
-            <p className="text-lg font-bold text-amber-400">R$ {Number(agent.totalWon).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </div>
+        <div className="grid grid-cols-4 gap-3">
+          <Card className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">GGR Rate</p>
+            <p className="text-lg font-bold text-purple-500">{agent.ggrRate || 0}%</p>
+          </Card>
+          <Card className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Total Depositado</p>
+            <p className="text-lg font-bold text-emerald-500">R$ {(Number(agent.totalDeposited) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </Card>
+          <Card className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Total Apostado</p>
+            <p className="text-lg font-bold text-blue-500">R$ {(Number(agent.totalWagered) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </Card>
+          <Card className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Total Ganho</p>
+            <p className="text-lg font-bold text-amber-500">R$ {(Number(agent.totalWon) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </Card>
         </div>
 
         {/* API Key */}
-        <div className="mb-6">
-          <label className="text-xs text-slate-400 font-medium">API Key</label>
-          <div className="mt-1 flex gap-2">
-            <input
-              readOnly
-              value={agent.apiKey}
-              className="flex-1 rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-emerald-400 font-mono"
-            />
-            <button
-              onClick={() => copyToClipboard(agent.apiKey, 'apiKey')}
-              className="rounded-lg bg-slate-700 px-3 py-2 text-slate-300 hover:bg-slate-600 transition"
-            >
-              {copiedKey === 'apiKey' ? '✅' : '📋'}
-            </button>
-          </div>
-        </div>
+        <CopyField label="API Key" value={agent.apiKey} icon={<Key className="h-4 w-4" />} />
 
         {/* Reset Password Section */}
-        <div className="mb-6 rounded-lg border border-slate-600 p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h5 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              🔐 Senha do Agente
+            <h5 className="text-sm font-medium flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Senha do Agente
             </h5>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowPasswordReset(!showPasswordReset)}
-              className="text-xs text-emerald-400 hover:text-emerald-300"
             >
               {showPasswordReset ? 'Cancelar' : 'Alterar Senha'}
-            </button>
+            </Button>
           </div>
 
           {passwordMessage && (
-            <div className={`mb-3 p-2 rounded text-sm ${
+            <div className={`mb-3 p-2 rounded text-sm flex items-center gap-2 ${
               passwordMessage.type === 'success' 
-                ? 'bg-emerald-500/20 text-emerald-300' 
-                : 'bg-red-500/20 text-red-300'
+                ? 'bg-emerald-500/20 text-emerald-500' 
+                : 'bg-red-500/20 text-red-500'
             }`}>
+              {passwordMessage.type === 'success' ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
               {passwordMessage.text}
             </div>
           )}
 
           {showPasswordReset && (
             <form onSubmit={handleResetPassword} className="space-y-3">
-              <div>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Nova senha (mín. 6 caracteres)"
-                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirmar nova senha"
-                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={passwordLoading}
-                className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50"
-              >
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Nova senha (mín. 6 caracteres)"
+                required
+              />
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirmar nova senha"
+                required
+              />
+              <Button type="submit" disabled={passwordLoading} className="w-full">
                 {passwordLoading ? 'Salvando...' : 'Salvar Nova Senha'}
-              </button>
+              </Button>
             </form>
           )}
-        </div>
+        </Card>
 
         {/* Recent Transactions */}
         <div>
-          <h5 className="text-sm font-medium text-slate-300 mb-3">Últimas Transações</h5>
+          <h5 className="text-sm font-medium mb-3">Últimas Transações</h5>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : transactions.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               Nenhuma transação encontrada
             </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {transactions.slice(0, 10).map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between rounded-lg bg-slate-700/30 p-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-lg ${tx.type.includes('DEPOSIT') || tx.type.includes('WIN') ? '💰' : tx.type.includes('GGR') ? '📊' : '💸'}`}>
-                      {tx.type.includes('DEPOSIT') || tx.type.includes('WIN') ? '💰' : tx.type.includes('GGR') ? '📊' : '💸'}
-                    </span>
-                    <div>
-                      <p className="text-sm font-medium text-white">{tx.type.replace(/_/g, ' ')}</p>
-                      <p className="text-xs text-slate-500">{tx.description || '-'}</p>
+                <Card key={tx.id} className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">
+                        {tx.type.includes('DEPOSIT') || tx.type.includes('WIN') ? '💰' : tx.type.includes('GGR') ? '📊' : '💸'}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium">{tx.type.replace(/_/g, ' ')}</p>
+                        <p className="text-xs text-muted-foreground">{tx.description || '-'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-bold ${Number(tx.amount) > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {Number(tx.amount) > 0 ? '+' : ''}R$ {Number(tx.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(tx.createdAt).toLocaleString('pt-BR')}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${Number(tx.amount) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {Number(tx.amount) > 0 ? '+' : ''}R$ {Number(tx.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(tx.createdAt).toLocaleString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
         </div>
 
-        <button
-          onClick={onClose}
-          className="mt-6 w-full rounded-lg bg-slate-700 py-2.5 font-medium text-white hover:bg-slate-600 transition"
-        >
-          Fechar
-        </button>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1027,11 +928,15 @@ function GamesModal({
     try {
       const res = await fetch(`${ADMIN_API}/games`);
       const data = await res.json();
+      let games: Game[] = [];
       if (Array.isArray(data)) {
-        setAllGames(data);
+        games = data;
       } else if (data.success && Array.isArray(data.data)) {
-        setAllGames(data.data);
+        games = data.data;
       }
+      // Filtrar apenas jogos validados
+      const filteredGames = games.filter((g: Game) => ALLOWED_GAMES.includes(g.gameCode));
+      setAllGames(filteredGames);
     } catch (err) {
       console.error('Failed to fetch games:', err);
       setError('Erro ao carregar jogos');
@@ -1042,7 +947,6 @@ function GamesModal({
 
   function toggleGame(gameCode: string) {
     if (selectAll) {
-      // Se "todos" está selecionado, mudar para seleção específica
       setSelectAll(false);
       setSelectedGames([gameCode]);
     } else {
@@ -1067,7 +971,6 @@ function GamesModal({
     setSuccess(null);
 
     try {
-      // Se "todos" está marcado, enviar array vazio (significa todos liberados)
       const gamesToSave = selectAll ? [] : selectedGames;
 
       const res = await fetch(`${AGENT_API}/agents/${agent.id}`, {
@@ -1101,29 +1004,24 @@ function GamesModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-white">Gerenciar Jogos</h3>
-            <p className="text-sm text-slate-400">Selecione quais jogos {agent.name} pode acessar</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition">
-            ✕
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Gerenciar Jogos</DialogTitle>
+          <DialogDescription>Selecione quais jogos {agent.name} pode acessar</DialogDescription>
+        </DialogHeader>
 
         {/* Agent Info */}
-        <div className="mb-6 rounded-lg bg-slate-700/50 p-4">
+        <div className="rounded-lg bg-muted p-4">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-linear-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
               {agent.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-medium text-white">{agent.name}</p>
-              <p className="text-sm text-slate-400">
+              <p className="font-medium">{agent.name}</p>
+              <p className="text-sm text-muted-foreground">
                 Jogos liberados: {' '}
-                <span className="text-emerald-400 font-semibold">
+                <span className="text-emerald-500 font-semibold">
                   {agent.allowedGames?.length === 0 ? 'Todos' : agent.allowedGames?.length || 0}
                 </span>
               </p>
@@ -1132,116 +1030,141 @@ function GamesModal({
         </div>
 
         {/* Select All Toggle */}
-        <div className="mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-4">
+        <Card className="p-4 border-emerald-500/30 bg-emerald-500/10">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={selectAll}
               onChange={(e) => handleSelectAll(e.target.checked)}
-              className="w-5 h-5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+              className="w-5 h-5 rounded border-muted bg-background text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
             />
             <div>
-              <p className="font-medium text-white">🎮 Liberar todos os jogos</p>
-              <p className="text-xs text-slate-400">O agente terá acesso a todos os jogos disponíveis, incluindo novos</p>
+              <p className="font-medium">🎮 Liberar todos os jogos</p>
+              <p className="text-xs text-muted-foreground">O agente terá acesso a todos os jogos disponíveis, incluindo novos</p>
             </div>
           </label>
-        </div>
+        </Card>
 
         {!selectAll && (
-          <>
-            {/* Games Grid */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-slate-300">
-                  Selecione os jogos específicos ({selectedGames.length} selecionado{selectedGames.length !== 1 ? 's' : ''})
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGames(allGames.map(g => g.gameCode))}
-                    className="text-xs text-emerald-400 hover:text-emerald-300"
-                  >
-                    Selecionar todos
-                  </button>
-                  <span className="text-slate-600">|</span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGames([])}
-                    className="text-xs text-slate-400 hover:text-slate-300"
-                  >
-                    Limpar seleção
-                  </button>
-                </div>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium">
+                Selecione os jogos específicos ({selectedGames.length} selecionado{selectedGames.length !== 1 ? 's' : ''})
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedGames(allGames.map(g => g.gameCode))}
+                >
+                  Selecionar todos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedGames([])}
+                >
+                  Limpar seleção
+                </Button>
               </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto p-1">
-                  {allGames.map((game) => (
-                    <label
-                      key={game.gameCode}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
-                        selectedGames.includes(game.gameCode)
-                          ? 'bg-emerald-500/20 border border-emerald-500/50'
-                          : 'bg-slate-700/30 border border-transparent hover:bg-slate-700/50'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedGames.includes(game.gameCode)}
-                        onChange={() => toggleGame(game.gameCode)}
-                        className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{game.gameName}</p>
-                        <p className="text-xs text-slate-500">{game.provider} • RTP {game.rtp}%</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
             </div>
-          </>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto p-1">
+                {allGames.map((game) => (
+                  <label
+                    key={game.gameCode}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition border ${
+                      selectedGames.includes(game.gameCode)
+                        ? 'bg-emerald-500/20 border-emerald-500/50'
+                        : 'bg-muted/30 border-transparent hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGames.includes(game.gameCode)}
+                      onChange={() => toggleGame(game.gameCode)}
+                      className="w-4 h-4 rounded border-muted bg-background text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{game.gameName}</p>
+                      <p className="text-xs text-muted-foreground">{game.provider} • RTP {game.rtp}%</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
-            ⚠️ {error}
+          <div className="rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-500 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 rounded-lg bg-emerald-500/20 border border-emerald-500/50 p-3 text-sm text-emerald-300">
-            ✅ {success}
+          <div className="rounded-lg bg-emerald-500/20 border border-emerald-500/50 p-3 text-sm text-emerald-500 flex items-center gap-2">
+            <Check className="h-4 w-4" />
+            {success}
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-slate-600 py-2.5 text-slate-300 hover:bg-slate-700 transition"
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSave}
             disabled={saving || (!selectAll && selectedGames.length === 0)}
-            className="flex-1 rounded-lg bg-emerald-600 py-2.5 font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50"
           >
             {saving ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 Salvando...
-              </span>
+              </>
             ) : (
               'Salvar Alterações'
             )}
-          </button>
-        </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =====================================================
+// Helper Component: Copy Field
+// =====================================================
+function CopyField({ label, value, className, icon }: { label: string; value: string; className?: string; icon?: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+        {icon}
+        {label}
+      </label>
+      <div className="mt-1 flex gap-2">
+        <Input
+          readOnly
+          value={value}
+          className={`font-mono ${className || ''}`}
+        />
+        <Button variant="outline" size="icon" onClick={handleCopy}>
+          {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+        </Button>
       </div>
     </div>
   );

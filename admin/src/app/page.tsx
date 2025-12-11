@@ -2,8 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AdminHeader from '@/components/AdminHeader';
+import ProtectedLayout from '@/components/ProtectedLayout';
 import { API_BASE, ADMIN_KEY } from '@/lib/config';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  RefreshCw,
+  Users,
+  MonitorPlay,
+  Gamepad2,
+  Wallet,
+  TrendingUp,
+  Target,
+  DollarSign,
+  ArrowRight,
+  Activity,
+  Database,
+  Server,
+  Zap,
+  Coins,
+} from 'lucide-react';
 
 interface Stats {
   agents: number;
@@ -20,6 +53,7 @@ interface Agent {
   id: string;
   name: string;
   balance: number;
+  spinCredits: number;
   isActive: boolean;
 }
 
@@ -44,7 +78,6 @@ export default function DashboardPage() {
 
   async function fetchData() {
     try {
-      // Fetch stats and agents in parallel
       const [statsRes, agentsRes] = await Promise.all([
         fetch(`${API_BASE}/admin/stats`),
         fetch(`${API_BASE}/agent/agents`, { headers: { 'x-admin-key': ADMIN_KEY } }),
@@ -53,13 +86,11 @@ export default function DashboardPage() {
       const statsData = await statsRes.json();
       const agentsData = await agentsRes.json();
 
-      // Process stats
       const bets = statsData.todayBets || 0;
       const wins = statsData.todayWins || 0;
       const ggr = bets - wins;
       const avgRtp = bets > 0 ? (wins / bets) * 100 : 0;
 
-      // Process agents
       const agents = agentsData.success ? agentsData.data : (Array.isArray(agentsData) ? agentsData : []);
       const totalAgentBalance = agents.reduce((sum: number, a: Agent) => sum + Number(a.balance || 0), 0);
 
@@ -83,254 +114,266 @@ export default function DashboardPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      <AdminHeader />
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+  return (
+    <ProtectedLayout>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold text-white">Dashboard</h2>
-            <p className="text-slate-400 text-sm mt-1">Visão geral do sistema</p>
+            <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Visão geral do sistema
+            </p>
           </div>
-          <div className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
+          </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-500/20 border border-red-500/50 p-4 text-red-300 flex items-center gap-2">
-            <span>⚠️</span> {error}
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive">
+            {error}
           </div>
         )}
 
-        {/* Stats Cards - Row 1 */}
-        <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Agentes"
-            value={stats.agents}
-            icon="👥"
-            loading={loading}
-            color="emerald"
-            href="/agents"
-          />
-          <StatCard
-            title="Sessões Ativas"
-            value={stats.activeSessions}
-            icon="🎮"
-            loading={loading}
-            color="blue"
-            href="/sessions"
-          />
-          <StatCard
-            title="Rounds (24h)"
-            value={stats.totalRounds.toLocaleString()}
-            icon="🎲"
-            loading={loading}
-            color="purple"
-          />
-          <StatCard
-            title="Saldo Total Agentes"
-            value={`R$ ${stats.totalAgentBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-            icon="💰"
-            loading={loading}
-            color="amber"
-            href="/agents"
-          />
-        </div>
-
-        {/* Stats Cards - Row 2 (Financial) */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <StatCard
-            title="Volume (24h)"
-            value={`R$ ${stats.totalVolume.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-            icon="📊"
-            loading={loading}
-            color="blue"
-          />
-          <StatCard
-            title="GGR (24h)"
-            value={`R$ ${stats.ggr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-            icon="📈"
-            loading={loading}
-            color="emerald"
-          />
-          <StatCard
-            title="RTP Médio (24h)"
-            value={`${stats.avgRtp.toFixed(1)}%`}
-            icon="🎯"
-            loading={loading}
-            color="purple"
-          />
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Quick Actions */}
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
-            <h3 className="mb-4 text-lg font-medium text-white">Ações Rápidas</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/agents"
-                className="flex items-center gap-3 rounded-lg bg-emerald-600/20 border border-emerald-600/30 p-4 text-emerald-400 hover:bg-emerald-600/30 transition"
-              >
-                <span className="text-2xl">➕</span>
-                <div>
-                  <p className="font-medium">Novo Agente</p>
-                  <p className="text-xs text-emerald-400/70">Cadastrar agente</p>
-                </div>
-              </Link>
-              <Link
-                href="/agents"
-                className="flex items-center gap-3 rounded-lg bg-amber-600/20 border border-amber-600/30 p-4 text-amber-400 hover:bg-amber-600/30 transition"
-              >
-                <span className="text-2xl">💰</span>
-                <div>
-                  <p className="font-medium">Add Créditos</p>
-                  <p className="text-xs text-amber-400/70">Gerenciar saldos</p>
-                </div>
-              </Link>
-              <Link
-                href="/games"
-                className="flex items-center gap-3 rounded-lg bg-blue-600/20 border border-blue-600/30 p-4 text-blue-400 hover:bg-blue-600/30 transition"
-              >
-                <span className="text-2xl">🎰</span>
-                <div>
-                  <p className="font-medium">Games</p>
-                  <p className="text-xs text-blue-400/70">Configurar jogos</p>
-                </div>
-              </Link>
-              <Link
-                href="/sessions"
-                className="flex items-center gap-3 rounded-lg bg-purple-600/20 border border-purple-600/30 p-4 text-purple-400 hover:bg-purple-600/30 transition"
-              >
-                <span className="text-2xl">📊</span>
-                <div>
-                  <p className="font-medium">Sessões</p>
-                  <p className="text-xs text-purple-400/70">Monitorar jogos</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          {/* Recent Agents */}
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-white">Agentes Recentes</h3>
-              <Link href="/agents" className="text-sm text-emerald-400 hover:text-emerald-300">
+        {/* Stats Row 1 */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Agentes</CardTitle>
+              <Users className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : stats.agents}
+              </div>
+              <Link href="/agents" className="text-xs text-primary hover:underline">
                 Ver todos →
               </Link>
-            </div>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Sessões Ativas</CardTitle>
+              <MonitorPlay className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : stats.activeSessions}
               </div>
-            ) : recentAgents.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <span className="text-3xl mb-2 block">👤</span>
-                <p>Nenhum agente cadastrado</p>
-                <Link href="/agents" className="text-emerald-400 text-sm hover:text-emerald-300">
-                  Criar primeiro agente →
-                </Link>
+              <Link href="/sessions" className="text-xs text-primary hover:underline">
+                Monitorar →
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rounds (24h)</CardTitle>
+              <Gamepad2 className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : stats.totalRounds.toLocaleString()}
               </div>
-            ) : (
-              <div className="space-y-3">
-                {recentAgents.map((agent) => (
-                  <div key={agent.id} className="flex items-center justify-between rounded-lg bg-slate-700/30 p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-linear-to-br from-emerald-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                        {agent.name.charAt(0).toUpperCase()}
+              <p className="text-xs text-muted-foreground">
+                Total de apostas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Saldo Agentes</CardTitle>
+              <Wallet className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-500">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : formatCurrency(stats.totalAgentBalance)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total disponível
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stats Row 2 - Financial */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Volume (24h)</CardTitle>
+              <DollarSign className="size-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-500">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : formatCurrency(stats.totalVolume)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Total apostado
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">GGR (24h)</CardTitle>
+              <TrendingUp className="size-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${stats.ggr >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : formatCurrency(stats.ggr)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Gross Gaming Revenue
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">RTP Médio (24h)</CardTitle>
+              <Target className="size-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-500">
+                {loading ? <RefreshCw className="size-5 animate-spin" /> : `${stats.avgRtp.toFixed(1)}%`}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Return to Player
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Two Columns */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ações Rápidas</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3">
+              <Link href="/pools">
+                <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+                  <Wallet className="size-5 text-cyan-500" />
+                  <span>Pools</span>
+                </Button>
+              </Link>
+              <Link href="/agents">
+                <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+                  <Users className="size-5 text-emerald-500" />
+                  <span>Novo Agente</span>
+                </Button>
+              </Link>
+              <Link href="/games">
+                <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+                  <Gamepad2 className="size-5 text-blue-500" />
+                  <span>Games</span>
+                </Button>
+              </Link>
+              <Link href="/sessions">
+                <Button variant="outline" className="w-full h-auto py-4 flex-col gap-2">
+                  <MonitorPlay className="size-5 text-purple-500" />
+                  <span>Sessões</span>
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Recent Agents */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Agentes Recentes</CardTitle>
+              <Link href="/agents">
+                <Button variant="ghost" size="sm">
+                  Ver todos <ArrowRight className="size-4 ml-1" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="size-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : recentAgents.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="size-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">Nenhum agente cadastrado</p>
+                  <Link href="/agents" className="text-primary text-sm hover:underline">
+                    Criar primeiro agente →
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentAgents.map((agent) => (
+                    <div key={agent.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                          {agent.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium">{agent.name}</p>
+                          <Badge variant={agent.isActive ? 'default' : 'destructive'} className="text-xs">
+                            {agent.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-white">{agent.name}</p>
-                        <span className={`text-xs ${agent.isActive ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {agent.isActive ? '● Ativo' : '● Inativo'}
-                        </span>
-                      </div>
+                      <p className={`font-bold flex items-center gap-1.5 ${(Number(agent.spinCredits) || 0) > 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                        <Coins className="h-4 w-4" />
+                        {(Number(agent.spinCredits) || 0).toLocaleString('pt-BR')}
+                      </p>
                     </div>
-                    <p className={`font-bold ${Number(agent.balance) > 0 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                      R$ {Number(agent.balance).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* System Status */}
-        <div className="mt-6 rounded-xl border border-slate-700 bg-slate-800/50 p-6">
-          <h3 className="mb-4 text-lg font-medium text-white">Status do Sistema</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatusItem label="API" status="online" />
-            <StatusItem label="Database" status="online" />
-            <StatusItem label="Redis Cache" status="online" />
-            <StatusItem label="Webhook Service" status="online" />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-  icon,
-  loading,
-  color,
-  href,
-}: {
-  title: string;
-  value: string | number;
-  icon: string;
-  loading: boolean;
-  color: 'emerald' | 'blue' | 'purple' | 'amber';
-  href?: string;
-}) {
-  const colors = {
-    emerald: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
-    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-    amber: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
-  };
-
-  const content = (
-    <div className={`rounded-xl border bg-linear-to-br p-5 ${colors[color]} ${href ? 'hover:scale-[1.02] transition-transform cursor-pointer' : ''}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-2xl">{icon}</span>
-        {loading && (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Status do Sistema</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Server className="size-4 text-muted-foreground" />
+                <span className="text-sm">API</span>
+                <Badge variant="outline" className="ml-auto text-xs">Online</Badge>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Database className="size-4 text-muted-foreground" />
+                <span className="text-sm">Database</span>
+                <Badge variant="outline" className="ml-auto text-xs">Online</Badge>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Zap className="size-4 text-muted-foreground" />
+                <span className="text-sm">Redis</span>
+                <Badge variant="outline" className="ml-auto text-xs">Online</Badge>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Activity className="size-4 text-muted-foreground" />
+                <span className="text-sm">Webhooks</span>
+                <Badge variant="outline" className="ml-auto text-xs">Online</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      <div className="mt-3">
-        <p className="text-sm text-slate-400">{title}</p>
-        <p className="mt-1 text-xl font-bold text-white">
-          {loading ? '...' : value}
-        </p>
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
-
-  return content;
-}
-
-function StatusItem({ label, status }: { label: string; status: 'online' | 'offline' | 'warning' }) {
-  const statusColors = {
-    online: 'bg-emerald-500',
-    offline: 'bg-red-500',
-    warning: 'bg-amber-500',
-  };
-
-  return (
-    <div className="flex items-center gap-2 rounded-lg bg-slate-700/30 p-3">
-      <span className={`h-2 w-2 rounded-full ${statusColors[status]} animate-pulse`} />
-      <span className="text-sm text-slate-300">{label}</span>
-      <span className="ml-auto text-xs text-slate-500 capitalize">{status}</span>
-    </div>
+    </ProtectedLayout>
   );
 }

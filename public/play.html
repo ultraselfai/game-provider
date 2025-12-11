@@ -35,7 +35,7 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: flex-end;
         }
         .control-group {
             display: flex;
@@ -53,6 +53,7 @@
             background: #2a2a4a;
             color: #fff;
             font-size: 14px;
+            min-width: 150px;
         }
         select:focus, input:focus {
             outline: none;
@@ -83,7 +84,7 @@
         }
         .game-frame {
             width: 100%;
-            height: 700px;
+            height: 650px;
             border: none;
             border-radius: 10px;
             background: #000;
@@ -112,16 +113,59 @@
         .status.connected { background: #2ecc71; color: #fff; }
         .status.loading { background: #f39c12; color: #fff; }
         .status.error { background: #e74c3c; color: #fff; }
+        .agent-info {
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .agent-info.visible { display: block; }
+        .agent-info h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .agent-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .agent-stat {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        .agent-stat label {
+            display: block;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        .agent-stat value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .agent-stat value.rtp { color: #2ecc71; }
+        .agent-stat value.winchance { color: #3498db; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎰 Game Launcher</h1>
-        <p class="subtitle">Ambiente de Desenvolvimento - Token gerado automaticamente</p>
+        <p class="subtitle">Ambiente de Teste - Selecione um Agente para usar suas configurações de RTP/WinChance</p>
         
         <div class="controls">
             <div class="control-group">
-                <label>Jogo</label>
+                <label>🤖 Agente</label>
+                <select id="agentSelect" onchange="onAgentChange()">
+                    <option value="">-- Selecione um Agente --</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>🎮 Jogo</label>
                 <select id="gameSelect">
                     <option value="fortuneox">Fortune Ox</option>
                     <option value="fortunetiger">Fortune Tiger</option>
@@ -138,12 +182,35 @@
                 </select>
             </div>
             <div class="control-group">
-                <label>User ID (teste)</label>
+                <label>👤 Player ID</label>
                 <input type="text" id="userId" value="player123" style="width: 120px;">
             </div>
             <button class="btn btn-primary" onclick="launchGame()">🚀 Iniciar Jogo</button>
-            <button class="btn btn-secondary" onclick="refreshGame()">🔄 Recarregar (Novo Token)</button>
-            <button class="btn btn-secondary" onclick="openConfig()">⚙️ Admin Panel</button>
+            <button class="btn btn-secondary" onclick="refreshGame()">🔄 Novo Token</button>
+            <button class="btn btn-secondary" onclick="openAdminPanel()">⚙️ Admin</button>
+            <button class="btn btn-secondary" onclick="openAgentPanel()">👤 Painel Agente</button>
+        </div>
+
+        <div id="agentInfo" class="agent-info">
+            <h3>📊 Configurações do Agente para este Jogo</h3>
+            <div class="agent-stats">
+                <div class="agent-stat">
+                    <label>Agente</label>
+                    <value id="agentName">-</value>
+                </div>
+                <div class="agent-stat">
+                    <label>RTP</label>
+                    <value class="rtp" id="agentRtp">-</value>
+                </div>
+                <div class="agent-stat">
+                    <label>Chance de Vitória</label>
+                    <value class="winchance" id="agentWinChance">-</value>
+                </div>
+                <div class="agent-stat">
+                    <label>Créditos</label>
+                    <value id="agentCredits">-</value>
+                </div>
+            </div>
         </div>
         
         <div class="info-bar">
@@ -157,17 +224,71 @@
 
     <script>
         let currentToken = null;
+        let agents = [];
+        
+        // Carrega lista de agentes ao iniciar
+        async function loadAgents() {
+            try {
+                const response = await fetch('/api/vgames/test/agents');
+                const data = await response.json();
+                
+                if (data.success && data.agents) {
+                    agents = data.agents;
+                    const select = document.getElementById('agentSelect');
+                    
+                    data.agents.forEach(agent => {
+                        const option = document.createElement('option');
+                        option.value = agent.id;
+                        option.textContent = `${agent.name} (${agent.credits} créditos)`;
+                        select.appendChild(option);
+                    });
+
+                    // Restaura último agente usado
+                    const lastAgent = localStorage.getItem('lastAgent');
+                    if (lastAgent) {
+                        select.value = lastAgent;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar agentes:', error);
+            }
+        }
+
+        function onAgentChange() {
+            const agentId = document.getElementById('agentSelect').value;
+            const infoDiv = document.getElementById('agentInfo');
+            
+            if (agentId) {
+                const agent = agents.find(a => a.id === agentId);
+                if (agent) {
+                    document.getElementById('agentName').textContent = agent.name;
+                    document.getElementById('agentCredits').textContent = agent.credits;
+                    // RTP e WinChance serão atualizados após gerar o token
+                    document.getElementById('agentRtp').textContent = 'Gere o token para ver';
+                    document.getElementById('agentWinChance').textContent = 'Gere o token para ver';
+                    infoDiv.classList.add('visible');
+                }
+            } else {
+                infoDiv.classList.remove('visible');
+            }
+        }
         
         async function launchGame() {
+            const agentId = document.getElementById('agentSelect').value;
             const game = document.getElementById('gameSelect').value;
             const userId = document.getElementById('userId').value || 'player' + Date.now();
+            
+            if (!agentId) {
+                alert('⚠️ Selecione um Agente primeiro!\n\nAs configurações de RTP e Chance de Vitória são por agente.');
+                return;
+            }
             
             document.getElementById('status').className = 'status loading';
             document.getElementById('status').textContent = 'Gerando token...';
             
             try {
-                // Gera novo token
-                const response = await fetch(`/api/vgames/test/generate-token/${userId}/${game}`);
+                // Gera token com agente específico
+                const response = await fetch(`/api/vgames/test/generate-token/${userId}/${game}/${agentId}`);
                 const data = await response.json();
                 
                 if (data.success && data.token) {
@@ -179,14 +300,23 @@
                     document.getElementById('status').className = 'status connected';
                     document.getElementById('status').textContent = 'Conectado';
                     
+                    // Atualiza info do agente
+                    if (data.agent) {
+                        document.getElementById('agentName').textContent = data.agent.name;
+                        document.getElementById('agentRtp').textContent = data.agent.rtp + '%';
+                        document.getElementById('agentWinChance').textContent = data.agent.winChance + '%';
+                        document.getElementById('agentInfo').classList.add('visible');
+                    }
+                    
                     // Carrega jogo no iframe
                     document.getElementById('gameFrame').src = data.gameUrl;
                     
-                    // Salva no localStorage para referência
+                    // Salva no localStorage
                     localStorage.setItem('lastGame', game);
                     localStorage.setItem('lastUserId', userId);
+                    localStorage.setItem('lastAgent', agentId);
                 } else {
-                    throw new Error('Falha ao gerar token');
+                    throw new Error(data.error || 'Falha ao gerar token');
                 }
             } catch (error) {
                 document.getElementById('status').className = 'status error';
@@ -196,16 +326,25 @@
         }
         
         function refreshGame() {
-            // Recarrega com novo token
             launchGame();
         }
         
-        function openConfig() {
-            window.open('https://console.ultraself.space/games', '_blank');
+        function openAdminPanel() {
+            // Abre admin local ou produção
+            const isLocal = window.location.hostname === 'localhost';
+            window.open(isLocal ? 'http://localhost:3001' : 'https://console.ultraself.space', '_blank');
+        }
+
+        function openAgentPanel() {
+            // Abre painel do agente local ou produção
+            const isLocal = window.location.hostname === 'localhost';
+            window.open(isLocal ? 'http://localhost:3002' : 'https://app.ultraself.space', '_blank');
         }
         
-        // Auto-load último jogo usado
+        // Inicialização
         window.onload = function() {
+            loadAgents();
+            
             const lastGame = localStorage.getItem('lastGame');
             const lastUserId = localStorage.getItem('lastUserId');
             

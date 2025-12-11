@@ -212,7 +212,12 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Jogo atualizado' })
   @ApiResponse({ status: 404, description: 'Jogo não encontrado' })
   async updateGame(@Param('gameCode') gameCode: string, @Body() dto: UpdateGameSettingsDto) {
-    const game = await this.gameSettingsService.updateGame(gameCode, dto);
+    // Converte strings de data para Date objects
+    const updates: any = { ...dto };
+    if (dto.promoStart) updates.promoStart = new Date(dto.promoStart);
+    if (dto.promoEnd) updates.promoEnd = new Date(dto.promoEnd);
+    
+    const game = await this.gameSettingsService.updateGame(gameCode, updates);
     if (!game) {
       throw new NotFoundException('Game not found');
     }

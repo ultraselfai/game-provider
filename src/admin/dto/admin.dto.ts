@@ -311,6 +311,25 @@ export class UpdateGameSettingsDto {
   betSizes?: number[];
 
   @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  baseBets?: number[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  maxLevel?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200000) // Suporta Megaways (até 117649+)
+  numLines?: number;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)

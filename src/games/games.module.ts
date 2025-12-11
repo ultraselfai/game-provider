@@ -12,12 +12,14 @@ import { SlotEngine } from '../engine/slot-engine';
 import { RngService } from '../engine/rng.service';
 import { WebhookModule } from '../webhook/webhook.module';
 import { AdminModule } from '../admin/admin.module';
+import { PoolModule } from '../services/pool.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([GameSession, GameRound, Transaction, Agent, AgentTransaction, AgentGameSettings, GameSettings]),
     WebhookModule,
     AdminModule, // Para usar GameSettingsService
+    PoolModule, // Para usar PoolService
   ],
   controllers: [GamesController],
   providers: [SlotEngine, RngService],

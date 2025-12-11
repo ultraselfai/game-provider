@@ -55,6 +55,13 @@ export interface GameConfig {
   defaultBet: number;
   betSizes: number[];
   numLines: number;
+  
+  // Configuração de apostas estilo PG Soft (opcional)
+  baseBets?: number[];     // Ex: [0.08, 0.80, 3.00, 10.00]
+  maxLevel?: number;       // Ex: 10 (níveis 1-10)
+
+  // Formato de icon_data (para jogos C3)
+  useFlatIconData?: boolean;  // true = array flat [s0, s1, s2...], false = matriz 2D [[row0], [row1]...]
 
   // Features
   hasFreeSpin: boolean;
@@ -107,6 +114,41 @@ export interface SpinResult {
   triggerFreeSpin: boolean;
   freeSpinsAwarded: number;
   triggerBonus: boolean;
+  
+  // Feature especial (Tigre da Sorte, Touro, etc.)
+  featureTriggered: boolean;       // Se a feature especial foi ativada
+  featureResult?: FeatureResult;   // Dados da feature (respins, símbolo escolhido)
+}
+
+/**
+ * Resultado da Feature Especial (Tigre da Sorte / Fortune Ox / etc.)
+ * 
+ * Mecânica:
+ * 1. Durante qualquer spin, pode ativar aleatoriamente
+ * 2. Um símbolo é escolhido (exceto Wild)
+ * 3. Grid mostra apenas: símbolo escolhido, Wild, ou vazio
+ * 4. Se aparecer 1+ símbolo novo, faz respin com símbolos fixos
+ * 5. Continua até não aparecer mais símbolos
+ * 6. Se grid cheio: multiplicador x10
+ */
+export interface FeatureResult {
+  featureSymbol: string;           // Símbolo escolhido para a feature
+  featureSymbolId: number;         // ID do símbolo
+  totalRespins: number;            // Quantos respins aconteceram
+  finalMultiplier: number;         // Multiplicador final (10 se grid cheio)
+  isFullGrid: boolean;             // Se o grid ficou cheio (ativa x10)
+  respinHistory: RespinData[];     // Histórico de cada respin
+  lockedPositions: number[];       // Posições travadas no grid
+}
+
+/**
+ * Dados de cada respin da feature
+ */
+export interface RespinData {
+  respinNumber: number;            // Número do respin (1, 2, 3...)
+  icons: string[];                 // Grid após este respin
+  newSymbolsCount: number;         // Quantos símbolos novos apareceram
+  lockedPositions: number[];       // Posições travadas após este respin
 }
 
 // Dados da sessão de um jogador

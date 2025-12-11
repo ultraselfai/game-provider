@@ -2,25 +2,46 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { AGENT_API } from '@/lib/config';
+import { API_BASE } from '@/lib/config';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  RefreshCw,
+  Settings,
+  Lock,
+  Eye,
+  EyeOff,
+  Save,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface Agent {
   id: string;
   name: string;
   email: string;
-  spinCredits: number;
+  balance: number;
 }
 
 export default function SettingsPage() {
   const router = useRouter();
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Password change state
+
+  // Password change states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
@@ -34,7 +55,8 @@ export default function SettingsPage() {
       return;
     }
 
-    setAgent(JSON.parse(agentData));
+    const parsedAgent = JSON.parse(agentData);
+    setAgent(parsedAgent);
     setLoading(false);
   }, [router]);
 
@@ -43,25 +65,27 @@ export default function SettingsPage() {
     setPasswordError('');
     setPasswordSuccess('');
 
-    if (newPassword.length < 6) {
-      setPasswordError('Nova senha deve ter pelo menos 6 caracteres');
+    if (newPassword !== confirmPassword) {
+      setPasswordError('As senhas não coincidem');
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      setPasswordError('As senhas não conferem');
+    if (newPassword.length < 6) {
+      setPasswordError('A nova senha deve ter pelo menos 6 caracteres');
       return;
     }
+
+    const token = localStorage.getItem('agentToken');
+    if (!token) return;
 
     setPasswordLoading(true);
 
     try {
-      const token = localStorage.getItem('agentToken');
-      const res = await fetch(`${AGENT_API}/password`, {
-        method: 'PUT',
+      const response = await fetch(`${API_BASE}/agent/change-password`, {
+        method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword,
@@ -69,9 +93,9 @@ export default function SettingsPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setPasswordSuccess('Senha alterada com sucesso!');
         setCurrentPassword('');
         setNewPassword('');
@@ -79,182 +103,169 @@ export default function SettingsPage() {
       } else {
         setPasswordError(data.message || 'Erro ao alterar senha');
       }
-    } catch (err) {
-      setPasswordError('Erro de conexão');
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      setPasswordError('Erro de conexão. Tente novamente.');
     } finally {
       setPasswordLoading(false);
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem('agentToken');
-    localStorage.removeItem('agentData');
-    router.push('/');
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <RefreshCw className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="mx-auto max-w-6xl px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
-                <span className="text-xl">🎰</span>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+        <p className="text-muted-foreground">
+          Gerencie suas preferências e segurança da conta
+        </p>
+      </div>
+
+      {/* Account Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="size-5" />
+            Informações da Conta
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Nome</label>
+              <div className="rounded-lg bg-muted border px-4 py-3 text-sm">
+                {agent?.name || 'N/A'}
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">{agent?.name}</h1>
-                <p className="text-xs text-slate-400">{agent?.email}</p>
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Email</label>
+              <div className="rounded-lg bg-muted border px-4 py-3 text-sm">
+                {agent?.email || 'N/A'}
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Para alterar nome ou email, entre em contato com o suporte.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="size-5" />
+            Alterar Senha
+          </CardTitle>
+          <CardDescription>
+            Mantenha sua conta segura atualizando sua senha regularmente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+            {/* Current Password */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Senha Atual</label>
+              <div className="relative">
+                <Input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                  className="pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-700/50 rounded-xl px-6 py-3 border border-slate-600">
-              <span className="text-2xl">🎰</span>
-              <div className="text-right">
-                <p className="text-xs text-slate-400">Créditos de Spin</p>
-                <p className={`text-2xl font-bold ${Number(agent?.spinCredits) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Math.floor(Number(agent?.spinCredits || 0))} créditos
-                </p>
+            {/* New Password */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Nova Senha</label>
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Digite a nova senha"
+                  className="pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
               </div>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-red-600/20 hover:text-red-400 border border-slate-600 hover:border-red-500/50 px-4 py-2 text-sm text-slate-300 transition"
-            >
-              <span>🚪</span>
-              Sair
-            </button>
-          </div>
-        </div>
-      </header>
+            {/* Confirm Password */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Confirmar Nova Senha</label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirme a nova senha"
+                  className="pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+            </div>
 
-      {/* Navigation */}
-      <nav className="border-b border-slate-700/50 bg-slate-800/30">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex gap-1">
-            <Link
-              href="/dashboard"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              📊 Dashboard
-            </Link>
-            <Link
-              href="/dashboard/games"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              🎮 Jogos
-            </Link>
-            <Link
-              href="/dashboard/transactions"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              📋 Transações
-            </Link>
-            <Link
-              href="/dashboard/integration"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              🔗 Integração
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="px-4 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400"
-            >
-              ⚙️ Configurações
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-white">⚙️ Configurações</h2>
-          <p className="text-slate-400 text-sm mt-1">Gerencie suas preferências e segurança</p>
-        </div>
-
-        {/* Password Change Card */}
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden max-w-xl">
-          <div className="px-6 py-4 border-b border-slate-700">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span>🔐</span> Alterar Senha
-            </h3>
-          </div>
-
-          <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+            {/* Error Message */}
             {passwordError && (
-              <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm">
-                {passwordError}
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50 flex items-center gap-2">
+                <AlertTriangle className="size-4 text-destructive" />
+                <p className="text-sm text-destructive">{passwordError}</p>
               </div>
             )}
 
+            {/* Success Message */}
             {passwordSuccess && (
-              <div className="p-3 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-sm">
-                {passwordSuccess}
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/50 flex items-center gap-2">
+                <CheckCircle className="size-4 text-emerald-500" />
+                <p className="text-sm text-emerald-500">{passwordSuccess}</p>
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Senha Atual
-              </label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full rounded-lg bg-slate-900 border border-slate-600 px-4 py-2.5 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
-                placeholder="Digite sua senha atual"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Nova Senha
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded-lg bg-slate-900 border border-slate-600 px-4 py-2.5 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
-                placeholder="Digite a nova senha (mín. 6 caracteres)"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">
-                Confirmar Nova Senha
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg bg-slate-900 border border-slate-600 px-4 py-2.5 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
-                placeholder="Confirme a nova senha"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={passwordLoading}
-              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={passwordLoading}>
+              <Save className="size-4 mr-2" />
               {passwordLoading ? 'Salvando...' : 'Alterar Senha'}
-            </button>
+            </Button>
           </form>
-        </div>
-      </main>
+        </CardContent>
+      </Card>
     </div>
   );
 }

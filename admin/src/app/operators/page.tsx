@@ -1,7 +1,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminHeader from '@/components/AdminHeader';
+import ProtectedLayout from '@/components/ProtectedLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Plus,
+  Building2,
+  Settings,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Copy,
+  AlertTriangle,
+} from 'lucide-react';
 import { AGENT_API, ADMIN_KEY } from '@/lib/config';
 
 interface Operator {
@@ -47,117 +78,137 @@ export default function OperatorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      <AdminHeader />
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-white">Operadores</h2>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition"
-          >
-            <span>➕</span> Novo Operador
-          </button>
+    <ProtectedLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Operadores</h1>
+            <p className="text-muted-foreground">
+              Gerencie os operadores integrados ao sistema
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateModal(true)} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Operador
+          </Button>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-500/20 border border-red-500/50 p-4 text-red-300">
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-destructive">
+            <AlertCircle className="h-4 w-4" />
             {error}
           </div>
         )}
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-800">
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Nome</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">API Key</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Webhook</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Criado em</th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-slate-300">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {operators.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                      Nenhum operador cadastrado
-                    </td>
-                  </tr>
-                ) : (
-                  operators.map((op) => (
-                    <tr key={op.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">🏢</span>
-                          <span className="font-medium text-white">{op.name}</span>
+        {/* Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Lista de Operadores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-16 rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>API Key</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Webhook</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {operators.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12">
+                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                          <Building2 className="h-10 w-10" />
+                          <p>Nenhum operador cadastrado</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <code className="rounded bg-slate-700 px-2 py-1 text-xs text-emerald-400">
-                          {op.apiKey.slice(0, 20)}...
-                        </code>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                          op.isActive
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${op.isActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                          {op.isActive ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-400">
-                        {op.webhookUrl ? (
-                          <span className="text-blue-400">Configurado</span>
-                        ) : (
-                          <span className="text-slate-500">Não configurado</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-400">
-                        {new Date(op.createdAt).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button className="rounded p-1 text-slate-400 hover:bg-slate-700 hover:text-white transition">
-                          ⚙️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </main>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    operators.map((op) => (
+                      <TableRow key={op.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                              {op.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-medium">{op.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <code className="rounded bg-muted px-2 py-1 text-xs text-emerald-500 font-mono">
+                            {op.apiKey.slice(0, 20)}...
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={op.isActive ? 'default' : 'destructive'}>
+                            {op.isActive ? (
+                              <><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1.5" /> Ativo</>
+                            ) : (
+                              <><span className="h-1.5 w-1.5 rounded-full bg-red-400 mr-1.5" /> Inativo</>
+                            )}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {op.webhookUrl ? (
+                            <Badge variant="secondary" className="text-blue-500">
+                              Configurado
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Não configurado</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(op.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Create Modal */}
-      {showCreateModal && (
-        <CreateOperatorModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={() => {
-            setShowCreateModal(false);
-            fetchOperators();
-          }}
-        />
-      )}
-    </div>
+      <CreateOperatorModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          setShowCreateModal(false);
+          fetchOperators();
+        }}
+      />
+    </ProtectedLayout>
   );
 }
 
 function CreateOperatorModal({
+  open,
   onClose,
   onCreated,
 }: {
+  open: boolean;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -198,99 +249,136 @@ function CreateOperatorModal({
     }
   }
 
+  function handleClose() {
+    setName('');
+    setWebhookUrl('');
+    setResult(null);
+    setError(null);
+    onClose();
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-2xl">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         {result ? (
           <>
-            <div className="mb-4 flex items-center gap-2 text-emerald-400">
-              <span className="text-2xl">✅</span>
-              <h3 className="text-lg font-semibold">Operador Criado!</h3>
-            </div>
-            <div className="mb-4 rounded-lg bg-amber-500/20 border border-amber-500/50 p-3">
-              <p className="text-sm text-amber-300">
-                ⚠️ <strong>IMPORTANTE:</strong> Guarde o API Secret abaixo. Ele não será mostrado novamente!
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-500">
+                <CheckCircle2 className="h-5 w-5" />
+                Operador Criado!
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-amber-500">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <p className="text-sm">
+                <strong>IMPORTANTE:</strong> Guarde o API Secret abaixo. Ele não será mostrado novamente!
               </p>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-slate-400">API Key</label>
-                <input
-                  readOnly
-                  value={result.apiKey}
-                  className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-emerald-400 font-mono"
-                />
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>API Key</Label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={result.apiKey}
+                    className="font-mono text-emerald-500"
+                  />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(result.apiKey)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div>
-                <label className="text-xs text-slate-400">API Secret</label>
-                <input
-                  readOnly
-                  value={result.apiSecret}
-                  className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-amber-400 font-mono"
-                />
+              <div className="space-y-2">
+                <Label>API Secret</Label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={result.apiSecret}
+                    className="font-mono text-amber-500"
+                  />
+                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(result.apiSecret)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-            <button
-              onClick={onCreated}
-              className="mt-6 w-full rounded-lg bg-emerald-600 py-2 font-medium text-white hover:bg-emerald-500 transition"
-            >
+
+            <Button onClick={onCreated} className="w-full bg-emerald-600 hover:bg-emerald-700">
               Fechar
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <h3 className="mb-4 text-lg font-semibold text-white">Novo Operador</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-slate-300">Nome *</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ex: BetDemo"
-                    className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-300">Webhook URL (opcional)</label>
-                  <input
-                    type="url"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://api.exemplo.com/webhook"
-                    className="mt-1 w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  />
-                </div>
+            <DialogHeader>
+              <DialogTitle>Novo Operador</DialogTitle>
+              <DialogDescription>
+                Crie um novo operador para integrar ao sistema
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: BetDemo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="webhook">Webhook URL (opcional)</Label>
+                <Input
+                  id="webhook"
+                  type="url"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://api.exemplo.com/webhook"
+                />
               </div>
 
               {error && (
-                <div className="mt-4 rounded-lg bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
+                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" />
                   {error}
                 </div>
               )}
 
-              <div className="mt-6 flex gap-3">
-                <button
+              <div className="flex gap-3">
+                <Button
                   type="button"
-                  onClick={onClose}
-                  className="flex-1 rounded-lg border border-slate-600 py-2 text-slate-300 hover:bg-slate-700 transition"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleClose}
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 rounded-lg bg-emerald-600 py-2 font-medium text-white hover:bg-emerald-500 transition disabled:opacity-50"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                 >
-                  {loading ? 'Criando...' : 'Criar'}
-                </button>
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    'Criar'
+                  )}
+                </Button>
               </div>
             </form>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

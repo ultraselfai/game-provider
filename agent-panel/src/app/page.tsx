@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { AGENT_API } from '@/lib/config';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 // Helper function to set cookie
 function setCookie(name: string, value: string, days: number) {
@@ -50,95 +55,112 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center p-4">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-linear-to-br from-purple-600/10 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-linear-to-tl from-emerald-600/10 to-transparent rounded-full blur-3xl"></div>
-      </div>
+    <div className="bg-background flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm md:max-w-4xl">
+        <div className="flex flex-col gap-6">
+          <Card className="overflow-hidden p-0">
+            <CardContent className="grid p-0 md:grid-cols-2">
+              <form className="p-6 md:p-8" onSubmit={handleLogin}>
+                <div className="flex flex-col gap-6">
+                  {/* Logo */}
+                  <div className="flex justify-center mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-lg overflow-hidden">
+                        <Image
+                          src="/game-provider-simbol.png"
+                          alt="Game Provider"
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="text-xl font-semibold">Game Provider</span>
+                    </div>
+                  </div>
 
-      <div className="relative w-full max-w-md">
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500 to-blue-600 mb-4">
-            <span className="text-3xl">🎰</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Game Provider</h1>
-          <p className="text-slate-400 mt-1">Painel do Agente</p>
+                  {/* Header */}
+                  <div className="flex flex-col items-center text-center">
+                    <h1 className="text-2xl font-bold">Bem-vindo de volta</h1>
+                    <p className="text-muted-foreground text-balance">
+                      Entre na sua conta de agente
+                    </p>
+                  </div>
+
+                  {/* Error */}
+                  {error && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  <div className="grid gap-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      E-mail
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="grid gap-2">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      Senha
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-10 px-4 py-2 rounded-md text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="size-4 mr-2 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : (
+                      'Entrar'
+                    )}
+                  </button>
+
+                  {/* Footer */}
+                  <div className="text-center text-sm">
+                    Não tem uma conta?{' '}
+                    <a href="#" className="text-blue-500 underline underline-offset-4 hover:text-blue-400">
+                      Entre em contato
+                    </a>
+                  </div>
+                </div>
+              </form>
+
+              {/* Side Image */}
+              <div className="relative hidden md:block overflow-hidden">
+                <Image
+                  src="/capa-auth.png"
+                  alt="Game Provider"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Login Card */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-white mb-6">Entrar na sua conta</h2>
-
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm flex items-center gap-2">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                E-mail
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg bg-slate-700/50 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition"
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg bg-slate-700/50 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-linear-to-r from-emerald-600 to-emerald-500 px-4 py-3 font-semibold text-white hover:from-emerald-500 hover:to-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Entrando...
-                </>
-              ) : (
-                <>
-                  Entrar
-                  <span>→</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <p className="text-center text-sm text-slate-400">
-              Não tem uma conta?{' '}
-              <a href="#" className="text-emerald-400 hover:text-emerald-300">
-                Entre em contato com o provedor
-              </a>
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-slate-500 mt-6">
-          © 2025 Game Provider. Todos os direitos reservados.
-        </p>
       </div>
     </div>
   );

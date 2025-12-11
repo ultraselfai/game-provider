@@ -10,6 +10,7 @@ import { AgentModule } from './agent/agent.module';
 import { WebhookModule } from './webhook';
 import { AdminModule } from './admin/admin.module';
 import { GamesModule } from './games/games.module';
+import { PoolModule } from './services/pool.module';
 
 @Module({
   imports: [
@@ -32,6 +33,8 @@ import { GamesModule } from './games/games.module';
     AdminModule,
     // Games Module
     GamesModule,
+    // Pool Management API
+    PoolModule,
     // Static files - serve from project root/public
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'public'),

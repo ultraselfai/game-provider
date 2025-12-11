@@ -4,6 +4,34 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AGENT_API } from '@/lib/config';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { 
+  CreditCard, 
+  TrendingUp, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  RefreshCw,
+  Wallet,
+  Gamepad2,
+  Info,
+  ChevronRight,
+} from 'lucide-react';
 
 interface Agent {
   id: string;
@@ -30,21 +58,17 @@ interface Transaction {
   createdAt: string;
 }
 
-// Helper para formatar descrição conforme regras do usuário
 function formatDescription(tx: Transaction): string {
   if (tx.type === 'credit') {
     return 'Saldo adicionado - Game Provider';
   }
-  // Para débito: mostrar apenas "Slot debitado"
   return 'Slot debitado';
 }
 
-// Helper para formatar valor
 function formatValue(tx: Transaction): string {
   if (tx.type === 'credit') {
     return `R$ ${Math.abs(Number(tx.amount)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   }
-  // Para débito: sempre 1 crédito
   return '1';
 }
 
@@ -70,7 +94,6 @@ export default function DashboardPage() {
 
   async function fetchData(token: string) {
     try {
-      // Fetch agent profile and transactions
       const [profileRes, transactionsRes] = await Promise.all([
         fetch(`${AGENT_API}/profile`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -99,233 +122,186 @@ export default function DashboardPage() {
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem('agentToken');
-    localStorage.removeItem('agentData');
-    router.push('/');
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <RefreshCw className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  // Pegar apenas as últimas 5 transações para o resumo
   const recentTransactions = transactions.slice(0, 5);
+  const credits = Math.floor(Number(agent?.spinCredits || 0));
+  const totalCredits = Math.floor(Number(agent?.totalCreditsPurchased || 0));
+  const totalConsumed = Math.floor(Number(agent?.totalSpinsConsumed || 0));
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header com Saldo */}
-      <header className="border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="mx-auto max-w-6xl px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo e Nome */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
-                <span className="text-xl">🎰</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">{agent?.name}</h1>
-                <p className="text-xs text-slate-400">{agent?.email}</p>
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Visão geral da sua conta no Game Provider
+        </p>
+      </div>
 
-            {/* Créditos de Spin */}
-            <div className="flex items-center gap-2 bg-slate-700/50 rounded-xl px-6 py-3 border border-slate-600">
-              <span className="text-2xl">🎰</span>
-              <div className="text-right">
-                <p className="text-xs text-slate-400">Créditos de Spin</p>
-                <p className={`text-2xl font-bold ${Number(agent?.spinCredits) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {Math.floor(Number(agent?.spinCredits || 0))} créditos
-                </p>
-              </div>
-            </div>
-
-            {/* Botão Sair */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-red-600/20 hover:text-red-400 border border-slate-600 hover:border-red-500/50 px-4 py-2 text-sm text-slate-300 transition"
-            >
-              <span>🚪</span>
-              Sair
-            </button>
-          </div>
+      {error && (
+        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50 text-destructive">
+          {error}
         </div>
-      </header>
+      )}
 
-      {/* Navigation */}
-      <nav className="border-b border-slate-700/50 bg-slate-800/30">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex gap-1">
-            <Link
-              href="/dashboard"
-              className="px-4 py-3 text-sm font-medium text-emerald-400 border-b-2 border-emerald-400"
-            >
-              📊 Dashboard
-            </Link>
-            <Link
-              href="/dashboard/games"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              🎮 Jogos
-            </Link>
-            <Link
-              href="/dashboard/transactions"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              📋 Transações
-            </Link>
-            <Link
-              href="/dashboard/integration"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              🔗 Integração
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 transition"
-            >
-              ⚙️ Configurações
-            </Link>
-          </div>
-        </div>
-      </nav>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Créditos Disponíveis
+            </CardTitle>
+            <Wallet className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{credits.toLocaleString('pt-BR')}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Créditos para spins
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300">
-            {error}
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-8">
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">💳</span>
-              <div>
-                <p className="text-sm text-slate-400">Total Créditos</p>
-                <p className="text-xl font-bold text-emerald-400">
-                  {Math.floor(Number(agent?.totalCreditsPurchased || 0))} créditos
-                </p>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Comprado
+            </CardTitle>
+            <CreditCard className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-500">
+              {totalCredits.toLocaleString('pt-BR')}
             </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📤</span>
-              <div>
-                <p className="text-sm text-slate-400">Total Consumido</p>
-                <p className="text-xl font-bold text-red-400">
-                  {Math.floor(Number(agent?.totalSpinsConsumed || 0))} spins
-                </p>
-              </div>
+            <div className="flex items-center gap-1 text-xs text-emerald-500 mt-1">
+              <ArrowUpRight className="size-3" />
+              Créditos adquiridos
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📈</span>
-              <div>
-                <p className="text-sm text-slate-400">Taxa GGR</p>
-                <p className="text-xl font-bold text-blue-400">
-                  {Number(agent?.ggrRate || 0).toFixed(1)}%
-                </p>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Consumido
+            </CardTitle>
+            <Gamepad2 className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-500">
+              {totalConsumed.toLocaleString('pt-BR')}
             </div>
-          </div>
-        </div>
+            <div className="flex items-center gap-1 text-xs text-amber-500 mt-1">
+              <ArrowDownRight className="size-3" />
+              Spins realizados
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Histórico Resumido */}
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">📋 Histórico Resumido</h2>
-            <Link 
-              href="/dashboard/transactions"
-              className="text-sm text-emerald-400 hover:text-emerald-300 transition"
-            >
-              Ver todas →
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Taxa GGR
+            </CardTitle>
+            <TrendingUp className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {Number(agent?.ggrRate || 0).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Receita bruta de jogos
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Transactions */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Histórico Recente</CardTitle>
+            <CardDescription>
+              Últimas movimentações da sua conta
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/transactions">
+              Ver todas
+              <ChevronRight className="ml-1 size-4" />
             </Link>
-          </div>
-
+          </Button>
+        </CardHeader>
+        <CardContent>
           {recentTransactions.length === 0 ? (
-            <div className="p-12 text-center">
-              <span className="text-4xl mb-4 block">📭</span>
-              <p className="text-slate-400">Nenhuma transação encontrada</p>
-              <p className="text-sm text-slate-500 mt-1">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CreditCard className="size-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Nenhuma transação encontrada</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 Suas transações aparecerão aqui quando houver movimentação
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-slate-700/30">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Data</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Tipo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Descrição</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Valor</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Saldo</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/50">
-                  {recentTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-slate-700/20 transition">
-                      <td className="px-6 py-4 text-sm text-slate-300">
-                        {new Date(tx.createdAt).toLocaleString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          tx.type === 'credit'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : tx.type === 'ggr_fee'
-                            ? 'bg-purple-500/20 text-purple-400'
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {tx.type === 'credit' ? '📥 Crédito' : tx.type === 'ggr_fee' ? '📊 Taxa GGR' : '📤 Débito'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-300">
-                        {formatDescription(tx)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className={`font-semibold ${
-                          tx.type === 'credit' ? 'text-emerald-400' : 'text-red-400'
-                        }`}>
-                          {tx.type === 'credit' ? '+' : '-'} {formatValue(tx)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right text-sm text-slate-400">
-                        {Math.floor(Number(tx.newBalance))} créditos
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentTransactions.map((tx) => (
+                  <TableRow key={tx.id}>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(tx.createdAt).toLocaleString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={tx.type === 'credit' ? 'success' : tx.type === 'ggr_fee' ? 'secondary' : 'destructive'}
+                      >
+                        {tx.type === 'credit' ? 'Crédito' : tx.type === 'ggr_fee' ? 'Taxa GGR' : 'Débito'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatDescription(tx)}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={tx.type === 'credit' ? 'text-emerald-500' : 'text-red-500'}>
+                        {tx.type === 'credit' ? '+' : '-'} {formatValue(tx)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {Math.floor(Number(tx.newBalance))} créditos
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Info Card */}
-        <div className="mt-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-5">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">💡</span>
-            <div>
-              <h3 className="font-medium text-blue-300">Como funcionam os créditos?</h3>
-              <p className="text-sm text-blue-200/70 mt-1">
-                Seus créditos de spin são consumidos quando os jogadores da sua bet utilizam os jogos. 
-                Cada rodada (spin) debita 1 crédito. Para adicionar mais créditos, 
-                entre em contato com o provedor via PIX ou transferência bancária.
-              </p>
-            </div>
+      {/* Info Card */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex items-start gap-4 pt-6">
+          <Info className="size-5 text-primary mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-primary">Como funcionam os créditos?</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Seus créditos de spin são consumidos quando os jogadores da sua bet utilizam os jogos. 
+              Cada rodada (spin) debita 1 crédito. Para adicionar mais créditos, 
+              entre em contato com o provedor via PIX ou transferência bancária.
+            </p>
           </div>
-        </div>
-      </main>
+        </CardContent>
+      </Card>
     </div>
   );
 }

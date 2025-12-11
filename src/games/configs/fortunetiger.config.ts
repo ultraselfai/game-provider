@@ -374,7 +374,33 @@ const PREDEFINED_LOSSES: PredefinedResult[] = [
 
 /**
  * Configuração completa do Fortune Tiger
+ * 
+ * ESTRUTURA DE APOSTAS (baseada no jogo original PG Soft):
+ * - BaseBets: R$0.08, R$0.80, R$3.00, R$10.00
+ * - Níveis: 1 a 10
+ * - Linhas: 5
+ * - Fórmula: BaseBet × Nível × Linhas = Aposta Total
+ * 
+ * Exemplo: R$0.08 × 1 × 5 = R$0.40 (aposta mínima)
+ *          R$10.00 × 10 × 5 = R$500.00 (aposta máxima)
  */
+
+// Gera betSizes automaticamente
+const BASE_BETS = [0.08, 0.80, 3.00, 10.00];
+const MAX_LEVEL = 10;
+const NUM_LINES = 5;
+
+function generateBetSizes(): number[] {
+  const sizes: number[] = [];
+  for (const base of BASE_BETS) {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      const total = base * level * NUM_LINES;
+      sizes.push(Math.round(total * 100) / 100);
+    }
+  }
+  return [...new Set(sizes)].sort((a, b) => a - b);
+}
+
 export const FORTUNE_TIGER_CONFIG: GameConfig = {
   gameId: 'fortunetiger',
   gameName: 'Fortune Tiger',
@@ -401,12 +427,12 @@ export const FORTUNE_TIGER_CONFIG: GameConfig = {
   predefinedWins: PREDEFINED_WINS,
   predefinedLosses: PREDEFINED_LOSSES,
 
-  // Configurações de aposta
-  minBet: 0.20,
-  maxBet: 100,
-  defaultBet: 0.20,
-  betSizes: [0.20, 2, 20, 100],
-  numLines: 5,
+  // Configurações de aposta (baseadas no jogo original PG Soft)
+  minBet: 0.40,  // R$0.08 × 1 × 5
+  maxBet: 500,   // R$10.00 × 10 × 5
+  defaultBet: 0.40,
+  betSizes: generateBetSizes(),
+  numLines: NUM_LINES,
 
   // Features
   hasFreeSpin: true,

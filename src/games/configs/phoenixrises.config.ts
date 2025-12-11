@@ -2,9 +2,32 @@ import { GameConfig, PredefinedResult, SymbolConfig, PaylineConfig } from '../..
 
 /**
  * Configuração do Phoenix Rises
- * Grid: 5x3, 243 ways
+ * Grid: 5x3, 20 paylines
  * Tema: Fênix Oriental / Mitologia Chinesa
+ * 
+ * Estrutura de Apostas (igual ao original PG Soft):
+ * BaseBets: R$0.03, R$0.10, R$0.30, R$0.90
+ * Níveis: 1-10
+ * Linhas: 20
+ * Fórmula: BaseBet × Level × Lines = Total Bet
  */
+
+// Base bets disponíveis (valores que o jogador vê no seletor)
+const BASE_BETS = [0.03, 0.10, 0.30, 0.90];
+const MAX_LEVEL = 10;
+const NUM_LINES = 20;
+
+// Gera betSizes calculados (BaseBet × Level × Lines)
+function generateBetSizes(): number[] {
+  const sizes: number[] = [];
+  for (const base of BASE_BETS) {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      const total = base * level * NUM_LINES;
+      sizes.push(Math.round(total * 100) / 100);
+    }
+  }
+  return [...new Set(sizes)].sort((a, b) => a - b);
+}
 
 const SYMBOLS: SymbolConfig[] = [
   {
@@ -303,11 +326,13 @@ export const PHOENIX_RISES_CONFIG: GameConfig = {
   loseChance: 62,
   predefinedWins: PREDEFINED_WINS,
   predefinedLosses: PREDEFINED_LOSSES,
-  minBet: 1,
-  maxBet: 4000,
-  defaultBet: 1,
-  betSizes: [1, 2, 4, 8, 12, 20, 40, 80, 200, 500, 1000, 2000, 4000],
-  numLines: 243,
+  minBet: 0.6,  // 0.03 × 1 × 20
+  maxBet: 180,  // 0.90 × 10 × 20
+  defaultBet: 0.6,
+  betSizes: generateBetSizes(),
+  baseBets: BASE_BETS,
+  maxLevel: MAX_LEVEL,
+  numLines: NUM_LINES,
   hasFreeSpin: true,
   hasBonusGame: false,
   hasJackpot: false,

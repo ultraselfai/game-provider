@@ -4,12 +4,15 @@ import { GameConfig, PredefinedResult, SymbolConfig, PaylineConfig } from '../..
  * Configuração do Treasures of Aztec
  * Grid: 5x5 Cluster Pays
  * Tema: Civilização Asteca / Tesouros
+ * 
+ * IMPORTANTE: Os nomes dos símbolos DEVEM corresponder exatamente ao que
+ * o frontend espera: goldmask, redviolet, redmask, purple, flower, grass, a, k, q, j, 10, wild, scatter
  */
 
 const SYMBOLS: SymbolConfig[] = [
   {
     id: 0,
-    name: 'Symbol_0',
+    name: 'wild',
     displayName: 'Wild',
     isWild: true,
     isScatter: false,
@@ -17,7 +20,7 @@ const SYMBOLS: SymbolConfig[] = [
   },
   {
     id: 1,
-    name: 'Symbol_1',
+    name: 'scatter',
     displayName: 'Scatter',
     isWild: false,
     isScatter: true,
@@ -25,83 +28,91 @@ const SYMBOLS: SymbolConfig[] = [
   },
   {
     id: 2,
-    name: 'Symbol_2',
-    displayName: 'Aztec King',
+    name: 'goldmask',
+    displayName: 'Gold Mask',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 4, 8, 20, 40, 80, 120, 200, 400, 800],
   },
   {
     id: 3,
-    name: 'Symbol_3',
-    displayName: 'Jaguar',
+    name: 'redviolet',
+    displayName: 'Red Violet',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 3, 6, 15, 30, 60, 100, 150, 300, 600],
   },
   {
     id: 4,
-    name: 'Symbol_4',
-    displayName: 'Eagle',
+    name: 'redmask',
+    displayName: 'Red Mask',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 2, 5, 12, 25, 50, 80, 120, 250, 500],
   },
   {
     id: 5,
-    name: 'Symbol_5',
-    displayName: 'Sun Stone',
+    name: 'purple',
+    displayName: 'Purple',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 2, 4, 10, 20, 40, 60, 100, 200, 400],
   },
   {
     id: 6,
-    name: 'Symbol_6',
-    displayName: 'Gold Mask',
+    name: 'flower',
+    displayName: 'Flower',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 1, 3, 8, 15, 30, 50, 75, 150, 300],
   },
   {
     id: 7,
-    name: 'Symbol_7',
-    displayName: 'Pyramid',
+    name: 'grass',
+    displayName: 'Grass',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 1, 2, 6, 12, 25, 40, 60, 120, 250],
   },
   {
     id: 8,
-    name: 'Symbol_8',
-    displayName: 'Feathered Serpent',
+    name: 'a',
+    displayName: 'A',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 1, 2, 5, 10, 20, 35, 50, 100, 200],
   },
   {
     id: 9,
-    name: 'Symbol_9',
-    displayName: 'Emerald',
+    name: 'k',
+    displayName: 'K',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 0, 1, 4, 8, 16, 28, 40, 80, 160],
   },
   {
     id: 10,
-    name: 'Symbol_10',
-    displayName: 'Ruby',
+    name: 'q',
+    displayName: 'Q',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 0, 1, 3, 6, 12, 22, 32, 64, 128],
   },
   {
     id: 11,
-    name: 'Symbol_11',
-    displayName: 'Sapphire',
+    name: 'j',
+    displayName: 'J',
     isWild: false,
     isScatter: false,
     payouts: [0, 0, 0, 1, 2, 5, 10, 18, 26, 52, 104],
+  },
+  {
+    id: 12,
+    name: '10',
+    displayName: '10',
+    isWild: false,
+    isScatter: false,
+    payouts: [0, 0, 0, 1, 2, 4, 8, 14, 20, 40, 80],
   },
 ];
 
@@ -130,16 +141,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   // Cluster win with 5 matching symbols
   {
     icons: [
-      'Symbol_2', 'Symbol_2', 'Symbol_2', 'Symbol_7', 'Symbol_8',
-      'Symbol_2', 'Symbol_2', 'Symbol_9', 'Symbol_10', 'Symbol_11',
-      'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'goldmask', 'goldmask', 'goldmask', 'grass', 'a',
+      'goldmask', 'goldmask', 'k', 'q', 'j',
+      'redviolet', 'redmask', 'purple', 'flower', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 6, 7],
     activeLines: [{
       index: 0,
-      name: 'Symbol_2',
+      name: 'goldmask',
       combine: 5,
       way_243: 0,
       payout: 20,
@@ -154,16 +165,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   // Larger cluster win
   {
     icons: [
-      'Symbol_3', 'Symbol_3', 'Symbol_3', 'Symbol_7', 'Symbol_8',
-      'Symbol_3', 'Symbol_3', 'Symbol_3', 'Symbol_10', 'Symbol_11',
-      'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'redviolet', 'redviolet', 'redviolet', 'grass', 'a',
+      'redviolet', 'redviolet', 'redviolet', 'q', 'j',
+      'redviolet', 'redmask', 'purple', 'flower', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 6, 7, 8, 11],
     activeLines: [{
       index: 0,
-      name: 'Symbol_3',
+      name: 'redviolet',
       combine: 7,
       way_243: 0,
       payout: 100,
@@ -178,16 +189,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   // Small cluster
   {
     icons: [
-      'Symbol_5', 'Symbol_5', 'Symbol_7', 'Symbol_8', 'Symbol_9',
-      'Symbol_5', 'Symbol_5', 'Symbol_5', 'Symbol_10', 'Symbol_11',
-      'Symbol_3', 'Symbol_4', 'Symbol_6', 'Symbol_6', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'purple', 'purple', 'grass', 'a', 'k',
+      'purple', 'purple', 'purple', 'q', 'j',
+      'redviolet', 'redmask', 'flower', 'flower', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 6, 7, 8],
     activeLines: [{
       index: 0,
-      name: 'Symbol_5',
+      name: 'purple',
       combine: 5,
       way_243: 0,
       payout: 20,
@@ -202,16 +213,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   // MEGAWIN - Large cluster with wild
   {
     icons: [
-      'Symbol_0', 'Symbol_2', 'Symbol_2', 'Symbol_2', 'Symbol_8',
-      'Symbol_2', 'Symbol_2', 'Symbol_2', 'Symbol_2', 'Symbol_11',
-      'Symbol_2', 'Symbol_2', 'Symbol_2', 'Symbol_6', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'wild', 'goldmask', 'goldmask', 'goldmask', 'a',
+      'goldmask', 'goldmask', 'goldmask', 'goldmask', 'j',
+      'goldmask', 'goldmask', 'goldmask', 'flower', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13],
     activeLines: [{
       index: 0,
-      name: 'Symbol_2',
+      name: 'goldmask',
       combine: 11,
       way_243: 0,
       payout: 800,
@@ -225,16 +236,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   },
   {
     icons: [
-      'Symbol_6', 'Symbol_6', 'Symbol_6', 'Symbol_7', 'Symbol_8',
-      'Symbol_6', 'Symbol_6', 'Symbol_9', 'Symbol_10', 'Symbol_11',
-      'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_0', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'flower', 'flower', 'flower', 'grass', 'a',
+      'flower', 'flower', 'k', 'q', 'j',
+      'redviolet', 'redmask', 'purple', 'wild', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 6, 7],
     activeLines: [{
       index: 0,
-      name: 'Symbol_6',
+      name: 'flower',
       combine: 5,
       way_243: 0,
       payout: 8,
@@ -248,16 +259,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   },
   {
     icons: [
-      'Symbol_4', 'Symbol_4', 'Symbol_7', 'Symbol_8', 'Symbol_9',
-      'Symbol_4', 'Symbol_4', 'Symbol_4', 'Symbol_10', 'Symbol_11',
-      'Symbol_4', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'redmask', 'redmask', 'grass', 'a', 'k',
+      'redmask', 'redmask', 'redmask', 'q', 'j',
+      'redmask', 'redmask', 'purple', 'flower', 'grass',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 6, 7, 8, 11, 12],
     activeLines: [{
       index: 0,
-      name: 'Symbol_4',
+      name: 'redmask',
       combine: 7,
       way_243: 0,
       payout: 80,
@@ -271,16 +282,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   },
   {
     icons: [
-      'Symbol_7', 'Symbol_7', 'Symbol_7', 'Symbol_8', 'Symbol_9',
-      'Symbol_7', 'Symbol_7', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_1',
-      'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'grass', 'grass', 'grass', 'a', 'k',
+      'grass', 'grass', 'q', 'j', 'wild',
+      'redviolet', 'redmask', 'purple', 'flower', 'scatter',
+      'a', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 6, 7],
     activeLines: [{
       index: 0,
-      name: 'Symbol_7',
+      name: 'grass',
       combine: 5,
       way_243: 0,
       payout: 6,
@@ -294,16 +305,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   },
   {
     icons: [
-      'Symbol_8', 'Symbol_8', 'Symbol_8', 'Symbol_8', 'Symbol_9',
-      'Symbol_8', 'Symbol_8', 'Symbol_8', 'Symbol_11', 'Symbol_0',
-      'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_1',
-      'Symbol_7', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0',
-      'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5',
+      'a', 'a', 'a', 'a', 'k',
+      'a', 'a', 'a', 'j', 'wild',
+      'redviolet', 'redmask', 'purple', 'flower', 'scatter',
+      'grass', 'k', 'q', 'j', 'wild',
+      'scatter', 'goldmask', 'redviolet', 'redmask', 'purple',
     ],
     activeIcons: [1, 2, 3, 4, 6, 7, 8],
     activeLines: [{
       index: 0,
-      name: 'Symbol_8',
+      name: 'a',
       combine: 7,
       way_243: 0,
       payout: 35,
@@ -318,16 +329,16 @@ const PREDEFINED_WINS: PredefinedResult[] = [
   // Full screen bonus
   {
     icons: [
-      'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0',
-      'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0',
-      'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0',
-      'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0',
-      'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0', 'Symbol_0',
+      'wild', 'wild', 'wild', 'wild', 'wild',
+      'wild', 'wild', 'wild', 'wild', 'wild',
+      'wild', 'wild', 'wild', 'wild', 'wild',
+      'wild', 'wild', 'wild', 'wild', 'wild',
+      'wild', 'wild', 'wild', 'wild', 'wild',
     ],
     activeIcons: Array.from({ length: 25 }, (_, i) => i + 1),
     activeLines: [{
       index: 0,
-      name: 'Symbol_0',
+      name: 'wild',
       combine: 25,
       way_243: 0,
       payout: 1000,
@@ -342,18 +353,18 @@ const PREDEFINED_WINS: PredefinedResult[] = [
 ];
 
 const PREDEFINED_LOSSES: PredefinedResult[] = [
-  { icons: ['Symbol_7', 'Symbol_3', 'Symbol_9', 'Symbol_2', 'Symbol_5', 'Symbol_8', 'Symbol_4', 'Symbol_6', 'Symbol_11', 'Symbol_10', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_8', 'Symbol_5', 'Symbol_10', 'Symbol_3', 'Symbol_6', 'Symbol_9', 'Symbol_2', 'Symbol_7', 'Symbol_0', 'Symbol_11', 'Symbol_1', 'Symbol_4', 'Symbol_3', 'Symbol_5', 'Symbol_2', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_9', 'Symbol_6', 'Symbol_11', 'Symbol_4', 'Symbol_7', 'Symbol_10', 'Symbol_3', 'Symbol_8', 'Symbol_1', 'Symbol_0', 'Symbol_2', 'Symbol_5', 'Symbol_4', 'Symbol_6', 'Symbol_3', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_10', 'Symbol_7', 'Symbol_0', 'Symbol_5', 'Symbol_8', 'Symbol_11', 'Symbol_4', 'Symbol_9', 'Symbol_2', 'Symbol_1', 'Symbol_3', 'Symbol_6', 'Symbol_5', 'Symbol_7', 'Symbol_4', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_11', 'Symbol_8', 'Symbol_1', 'Symbol_6', 'Symbol_9', 'Symbol_0', 'Symbol_5', 'Symbol_10', 'Symbol_3', 'Symbol_2', 'Symbol_4', 'Symbol_7', 'Symbol_6', 'Symbol_8', 'Symbol_5', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_0', 'Symbol_9', 'Symbol_2', 'Symbol_7', 'Symbol_10', 'Symbol_1', 'Symbol_6', 'Symbol_11', 'Symbol_4', 'Symbol_3', 'Symbol_5', 'Symbol_8', 'Symbol_7', 'Symbol_9', 'Symbol_6', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_1', 'Symbol_10', 'Symbol_3', 'Symbol_8', 'Symbol_11', 'Symbol_2', 'Symbol_7', 'Symbol_0', 'Symbol_5', 'Symbol_4', 'Symbol_6', 'Symbol_9', 'Symbol_8', 'Symbol_10', 'Symbol_7', 'Symbol_11', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_2', 'Symbol_11', 'Symbol_4', 'Symbol_9', 'Symbol_0', 'Symbol_3', 'Symbol_8', 'Symbol_1', 'Symbol_6', 'Symbol_5', 'Symbol_7', 'Symbol_10', 'Symbol_9', 'Symbol_11', 'Symbol_8', 'Symbol_0', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_3', 'Symbol_0', 'Symbol_5', 'Symbol_10', 'Symbol_1', 'Symbol_4', 'Symbol_9', 'Symbol_2', 'Symbol_7', 'Symbol_6', 'Symbol_8', 'Symbol_11', 'Symbol_10', 'Symbol_0', 'Symbol_9', 'Symbol_1', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_4', 'Symbol_1', 'Symbol_6', 'Symbol_11', 'Symbol_2', 'Symbol_5', 'Symbol_10', 'Symbol_3', 'Symbol_8', 'Symbol_7', 'Symbol_9', 'Symbol_0', 'Symbol_11', 'Symbol_1', 'Symbol_10', 'Symbol_2', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_5', 'Symbol_2', 'Symbol_7', 'Symbol_0', 'Symbol_3', 'Symbol_6', 'Symbol_11', 'Symbol_4', 'Symbol_9', 'Symbol_8', 'Symbol_10', 'Symbol_1', 'Symbol_0', 'Symbol_2', 'Symbol_11', 'Symbol_3', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
-  { icons: ['Symbol_6', 'Symbol_3', 'Symbol_8', 'Symbol_1', 'Symbol_4', 'Symbol_7', 'Symbol_0', 'Symbol_5', 'Symbol_10', 'Symbol_9', 'Symbol_11', 'Symbol_2', 'Symbol_1', 'Symbol_3', 'Symbol_0', 'Symbol_4', 'Symbol_5', 'Symbol_6', 'Symbol_7', 'Symbol_8', 'Symbol_9', 'Symbol_10', 'Symbol_11', 'Symbol_0', 'Symbol_1'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['grass', 'redviolet', 'k', 'goldmask', 'purple', 'a', 'redmask', 'flower', 'j', 'q', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a', 'k', 'q', 'j', 'wild', 'scatter', 'goldmask'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['a', 'purple', 'q', 'redviolet', 'flower', 'k', 'goldmask', 'grass', 'wild', 'j', 'scatter', 'redmask', 'redviolet', 'purple', 'goldmask', 'flower', 'grass', 'a', 'k', 'q', 'j', 'wild', 'scatter', 'goldmask', 'redviolet'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['k', 'flower', 'j', 'redmask', 'grass', 'q', 'redviolet', 'a', 'scatter', 'wild', 'goldmask', 'purple', 'redmask', 'flower', 'redviolet', 'grass', 'a', 'k', 'q', 'j', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['q', 'grass', 'wild', 'purple', 'a', 'j', 'redmask', 'k', 'goldmask', 'scatter', 'redviolet', 'flower', 'purple', 'grass', 'redmask', 'a', 'k', 'q', 'j', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['j', 'a', 'scatter', 'flower', 'k', 'wild', 'purple', 'q', 'redviolet', 'goldmask', 'redmask', 'grass', 'flower', 'a', 'purple', 'k', 'q', 'j', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['wild', 'k', 'goldmask', 'grass', 'q', 'scatter', 'flower', 'j', 'redmask', 'redviolet', 'purple', 'a', 'grass', 'k', 'flower', 'q', 'j', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['scatter', 'q', 'redviolet', 'a', 'j', 'goldmask', 'grass', 'wild', 'purple', 'redmask', 'flower', 'k', 'a', 'q', 'grass', 'j', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['goldmask', 'j', 'redmask', 'k', 'wild', 'redviolet', 'a', 'scatter', 'flower', 'purple', 'grass', 'q', 'k', 'j', 'a', 'wild', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a', 'k'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['redviolet', 'wild', 'purple', 'q', 'scatter', 'redmask', 'k', 'goldmask', 'grass', 'flower', 'a', 'j', 'q', 'wild', 'k', 'scatter', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a', 'k', 'q'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['redmask', 'scatter', 'flower', 'j', 'goldmask', 'purple', 'q', 'redviolet', 'a', 'grass', 'k', 'wild', 'j', 'scatter', 'q', 'goldmask', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a', 'k', 'q', 'j'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['purple', 'goldmask', 'grass', 'wild', 'redviolet', 'flower', 'j', 'redmask', 'k', 'a', 'q', 'scatter', 'wild', 'goldmask', 'j', 'redviolet', 'redmask', 'purple', 'flower', 'grass', 'a', 'k', 'q', 'j', 'wild'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
+  { icons: ['flower', 'redviolet', 'a', 'scatter', 'redmask', 'grass', 'wild', 'purple', 'q', 'k', 'j', 'goldmask', 'scatter', 'redviolet', 'wild', 'redmask', 'purple', 'flower', 'grass', 'a', 'k', 'q', 'j', 'wild', 'scatter'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
 ];
 
 export const TREASURES_OF_AZTEC_CONFIG: GameConfig = {
@@ -374,6 +385,7 @@ export const TREASURES_OF_AZTEC_CONFIG: GameConfig = {
   defaultBet: 0.50,
   betSizes: [0.50, 5, 50, 250],
   numLines: 16,
+  useFlatIconData: true, // Treasures of Aztec usa SlotAt(index) para acessar símbolos linearmente
   hasFreeSpin: true,
   hasBonusGame: true,
   hasJackpot: true,

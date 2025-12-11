@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Agent, AgentTransaction, AgentGameSettings, GameSession, GameRound, Transaction, GameSettings } from './entities';
+import { Agent, AgentTransaction, AgentGameSettings, AgentPool, PoolTransaction, GameSession, GameRound, Transaction, GameSettings } from './entities';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { Agent, AgentTransaction, AgentGameSettings, GameSession, GameRound, Tra
         username: configService.get<string>('DB_USER', 'gameadmin'),
         password: configService.get<string>('DB_PASSWORD', 'gamepass123'),
         database: configService.get<string>('DB_NAME', 'game_provider'),
-        entities: [Agent, AgentTransaction, AgentGameSettings, GameSession, GameRound, Transaction, GameSettings],
+        entities: [Agent, AgentTransaction, AgentGameSettings, AgentPool, PoolTransaction, GameSession, GameRound, Transaction, GameSettings],
         // SSL para conexões em produção (desabilitar verificação de certificado para conexões internas)
         ssl: configService.get<string>('DB_SSL', 'false') === 'true' 
           ? { rejectUnauthorized: false } 
@@ -35,7 +35,7 @@ import { Agent, AgentTransaction, AgentGameSettings, GameSession, GameRound, Tra
       }),
     }),
     // Exportar repositórios para uso em outros módulos
-    TypeOrmModule.forFeature([Agent, AgentTransaction, AgentGameSettings, GameSession, GameRound, Transaction, GameSettings]),
+    TypeOrmModule.forFeature([Agent, AgentTransaction, AgentGameSettings, AgentPool, PoolTransaction, GameSession, GameRound, Transaction, GameSettings]),
   ],
   exports: [TypeOrmModule],
 })

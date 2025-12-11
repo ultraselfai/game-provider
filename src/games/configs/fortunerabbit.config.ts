@@ -279,6 +279,29 @@ const PREDEFINED_LOSSES: PredefinedResult[] = [
   { icons: ['Symbol_3', 'Symbol_4', 'Symbol_1', 'Symbol_6', 'Symbol_4', 'Symbol_5', 'Symbol_2', 'Symbol_1', 'Symbol_6'], activeIcons: [], activeLines: [], dropLine: [], multiplyCount: 1, payout: 0 },
 ];
 
+/**
+ * Configuração de apostas Fortune Rabbit
+ * 
+ * BaseBets: R$0.05, R$0.50, R$4.00
+ * Níveis: 1 a 10
+ * Linhas: 10
+ * Fórmula: BaseBet × Nível × Linhas = Aposta Total
+ */
+const BASE_BETS = [0.05, 0.50, 4.00];
+const MAX_LEVEL = 10;
+const NUM_LINES = 10;
+
+function generateBetSizes(): number[] {
+  const sizes: number[] = [];
+  for (const base of BASE_BETS) {
+    for (let level = 1; level <= MAX_LEVEL; level++) {
+      const total = base * level * NUM_LINES;
+      sizes.push(Math.round(total * 100) / 100);
+    }
+  }
+  return [...new Set(sizes)].sort((a, b) => a - b);
+}
+
 export const FORTUNE_RABBIT_CONFIG: GameConfig = {
   gameId: 'fortunerabbit',
   gameName: 'Fortune Rabbit',
@@ -292,11 +315,11 @@ export const FORTUNE_RABBIT_CONFIG: GameConfig = {
   loseChance: 55,
   predefinedWins: PREDEFINED_WINS,
   predefinedLosses: PREDEFINED_LOSSES,
-  minBet: 0.20,
-  maxBet: 100,
-  defaultBet: 0.20,
-  betSizes: [0.20, 2, 20, 100],
-  numLines: 10,
+  minBet: 0.50,
+  maxBet: 400,
+  defaultBet: 0.50,
+  betSizes: generateBetSizes(),
+  numLines: NUM_LINES,
   hasFreeSpin: true,
   hasBonusGame: false,
   hasJackpot: false,

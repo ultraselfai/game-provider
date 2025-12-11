@@ -14,6 +14,7 @@ import { AgentTransaction, AgentTransactionType } from '../database/entities/age
 import { AgentGameSettings } from '../database/entities/agent-game-settings.entity';
 import { WebhookService } from '../webhook/webhook.service';
 import { GameSettingsService } from '../admin/game-settings.service';
+import { PoolService } from '../services/pool.service';
 
 interface SpinBody {
   betamount?: string;
@@ -29,6 +30,7 @@ export class GamesController {
     private readonly slotEngine: SlotEngine,
     private readonly webhookService: WebhookService,
     private readonly gameSettingsService: GameSettingsService,
+    private readonly poolService: PoolService,
     @InjectRepository(GameSession)
     private readonly sessionRepository: Repository<GameSession>,
     @InjectRepository(GameRound)
@@ -196,10 +198,10 @@ export class GamesController {
       ts: Date.now() 
     });
     
-    // Cria sessão no banco
+    // Cria sessão no banco - USA agentId DIRETAMENTE para garantir vínculo correto
     const session = this.sessionRepository.create({
       sessionToken: token,
-      operatorId: agent.id, // Mantém operatorId por compatibilidade (refere-se ao agent)
+      agentId: agent.id, // CORRIGIDO: Usa agentId diretamente
       playerId: userId,
       gameCode: game,
       playerCurrency: 'BRL',
@@ -214,7 +216,8 @@ export class GamesController {
     const forwardedProto = req.headers['x-forwarded-proto'] as string;
     const forwardedHost = req.headers['x-forwarded-host'] as string;
     const hostHeader = req.headers['host'] as string;
-    const protocol = forwardedProto || 'https';
+    const isLocalhost = hostHeader?.includes('localhost');
+    const protocol = forwardedProto || (isLocalhost ? 'http' : 'https');
     const host = forwardedHost || hostHeader || 'api.ultraself.space';
     const baseUrl = process.env.API_URL || `${protocol}://${host}`;
 
@@ -222,6 +225,94 @@ export class GamesController {
       success: true,
       token,
       gameUrl: `${baseUrl}/${game}/?token=${token}`
+    };
+  }
+
+  /**
+   * Gera token de teste com agente específico
+   * Usado pelo Game Launcher para testar configurações de RTP/WinChance por agente
+   */
+  @Get('test/generate-token/:userId/:game/:agentId')
+  async generateTokenWithAgent(
+    @Param('userId') userId: string, 
+    @Param('game') game: string,
+    @Param('agentId') agentId: string,
+    @Req() req: Request,
+  ) {
+    // Busca o agente específico
+    const agent = await this.agentRepository.findOne({ where: { id: agentId } });
+    if (!agent) {
+      return { success: false, error: 'Agent not found' };
+    }
+
+    const token = makeToken({ 
+      id: parseInt(userId) || Date.now(), 
+      game, 
+      ts: Date.now() 
+    });
+    
+    // Cria sessão vinculada ao agente - USA agentId DIRETAMENTE
+    const session = this.sessionRepository.create({
+      sessionToken: token,
+      agentId: agent.id, // CORRIGIDO: Usa agentId diretamente
+      playerId: userId,
+      gameCode: game,
+      playerCurrency: 'BRL',
+      cachedBalance: 1000.00,
+      status: SessionStatus.ACTIVE,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    
+    await this.sessionRepository.save(session);
+
+    // Busca config do agente para esse jogo
+    const agentSettings = await this.agentGameSettingsRepository.findOne({
+      where: { agentId: agent.id, gameCode: game },
+    });
+
+    const forwardedProto = req.headers['x-forwarded-proto'] as string;
+    const forwardedHost = req.headers['x-forwarded-host'] as string;
+    const hostHeader = req.headers['host'] as string;
+    const isLocalhost = hostHeader?.includes('localhost');
+    const protocol = forwardedProto || (isLocalhost ? 'http' : 'https');
+    const host = forwardedHost || hostHeader || 'api.ultraself.space';
+    const baseUrl = process.env.API_URL || `${protocol}://${host}`;
+
+    this.logger.log(`[TEST] Token gerado para agente ${agent.name} (${agent.id}), jogo ${game}`);
+    this.logger.log(`[TEST] Config do agente: RTP=${agentSettings?.rtp || 96.5}%, WinChance=${agentSettings?.winChance || 35}%`);
+
+    return {
+      success: true,
+      token,
+      gameUrl: `${baseUrl}/${game}/?token=${token}`,
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        rtp: agentSettings?.rtp || 96.5,
+        winChance: agentSettings?.winChance || 35,
+      }
+    };
+  }
+
+  /**
+   * Lista agentes disponíveis para teste
+   */
+  @Get('test/agents')
+  async listAgentsForTest() {
+    const agents = await this.agentRepository.find({
+      where: { isActive: true },
+      select: ['id', 'name', 'email', 'spinCredits'],
+      order: { name: 'ASC' },
+    });
+
+    return {
+      success: true,
+      agents: agents.map(a => ({
+        id: a.id,
+        name: a.name,
+        email: a.email,
+        credits: a.spinCredits,
+      })),
     };
   }
 
@@ -271,18 +362,48 @@ export class GamesController {
 
     // Gera grid inicial aleatório
     const initialIconsFlat = this.slotEngine.generateRandomGrid(config);
-    const initialIcons = this.slotEngine.iconsToMatrix(initialIconsFlat, config.rows, config.cols);
+    const initialIconsMatrix = this.slotEngine.iconsToMatrix(initialIconsFlat, config.rows, config.cols);
+    
+    // Alguns jogos (ex: Treasures of Aztec) usam SlotAt(index) com índice linear
+    // e precisam de icon_data como array flat [s0, s1, s2, ...]
+    // Outros jogos (ex: Fortune games) acessam por linha e esperam matriz 2D
+    const initialIcons = config.useFlatIconData ? initialIconsFlat : initialIconsMatrix;
 
     // Monta betSizes dinâmicos (do DB ou fallback para config estático)
     const betSizes = dynamicSettings.betSizes.length > 0 
       ? dynamicSettings.betSizes 
       : config.betSizes;
 
+    // Verifica se o jogo usa sistema BaseBet × Level × Lines (estilo PG Soft)
+    // Se tiver baseBets no DB ou no config estático, usa esse sistema
+    const hasBaseBetSystem = (dynamicSettings.baseBets && dynamicSettings.baseBets.length > 0) || 
+                              (config.baseBets && config.baseBets.length > 0);
+    
+    // IMPORTANTE: O jogo espera os valores BASE (não calculados)
+    // O jogo internamente faz: baseBet × level × numLines
+    // baseBets são os valores que aparecem na UI do jogo como "Aposta"
+    let baseBets: number[];
+    let maxLevel: number;
+    
+    if (hasBaseBetSystem) {
+      // Sistema Fortune/PG Soft: BaseBet × Level × Lines
+      baseBets = dynamicSettings.baseBets && dynamicSettings.baseBets.length > 0
+        ? dynamicSettings.baseBets
+        : (config.baseBets || [0.08, 0.80, 3.00, 10.00]);
+      maxLevel = dynamicSettings.maxLevel || config.maxLevel || 10;
+    } else {
+      // Sistema tradicional: betSizes diretos (sem multiplicação por level)
+      baseBets = betSizes;
+      maxLevel = 1; // Apenas 1 nível - os valores já são finais
+    }
+    
+    const numLines = dynamicSettings.numLines || config.numLines;
+
     const data = {
       user_name: `Player ${session.playerId}`,
       credit: balance,
-      num_line: config.numLines,
-      line_num: config.numLines,
+      num_line: numLines,
+      line_num: numLines,
       bet_amount: dynamicSettings.defaultBet, // USA CONFIG DINÂMICO
       min_bet: dynamicSettings.minBet,        // NOVO: Aposta mínima
       max_bet: dynamicSettings.maxBet,        // NOVO: Aposta máxima
@@ -302,8 +423,8 @@ export class GamesController {
           ['Super Win', '70'],
           ['Epic Win', '100']
         ],
-        betsize: betSizes.map(b => b.toString()), // USA CONFIG DINÂMICO
-        betlevel: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+        betsize: baseBets.map(b => b.toString()), // CORRIGIDO: Envia baseBets (valores base)
+        betlevel: Array.from({ length: maxLevel }, (_, i) => (i + 1).toString()), // Níveis dinâmicos
         linedata: config.paylines.map(p => p.positions.map(pos => pos + 1).join('|'))
       },
       total_way: 0,
@@ -316,7 +437,7 @@ export class GamesController {
       currency_suffix: '',
       currency_thousand: '.',
       currency_decimal: ',',
-      bet_size_list: betSizes.map(b => b.toString()), // USA CONFIG DINÂMICO
+      bet_size_list: baseBets.map(b => b.toString()), // CORRIGIDO: Envia baseBets
       previous_session: false,
       game_state: null,
       feature_symbol: '',
@@ -556,13 +677,55 @@ export class GamesController {
     }
 
     // 3. Busca configurações dinâmicas - PRIORIZA config do AGENTE
+    this.logger.log(`[SPIN] ========== DIAGNÓSTICO DE CONFIG ==========`);
+    this.logger.log(`[SPIN] session.agent existe? ${!!session.agent}`);
+    this.logger.log(`[SPIN] session.agent?.id = ${session.agent?.id}`);
+    this.logger.log(`[SPIN] session.agent?.name = ${session.agent?.name}`);
+    this.logger.log(`[SPIN] session.gameCode = ${session.gameCode}`);
+    
     const agentConfig = await this.getAgentEffectiveConfig(session.agent?.id, session.gameCode);
-    this.logger.log(`[SPIN] Effective config for agent ${session.agent?.name || 'unknown'} - RTP: ${agentConfig.rtp}%, WinChance: ${agentConfig.winChance}%`);
+    this.logger.log(`[SPIN] ========== CONFIG FINAL ==========`);
+    this.logger.log(`[SPIN] RTP: ${agentConfig.rtp}% | WinChance: ${agentConfig.winChance}%`);
+    this.logger.log(`[SPIN] =====================================`);
 
-    // 4. Executa Lógica do Jogo COM configurações do agente
+    // 3.5 POOL: Verifica limites de pagamento do pool do agente
+    let poolLimits: { 
+      canPay: boolean; 
+      maxPayout: number; 
+      maxMultiplier: number; 
+      currentPhase: string; 
+      effectiveWinChance: number;
+      poolBalance: number;
+      reason?: string;
+    } | null = null;
+    let agentPool: any = null; // Será usado no processSpin depois
+    
+    if (session.agent?.id) {
+      try {
+        poolLimits = await this.poolService.checkPayoutLimits(session.agent.id, totalBet, cpl);
+        agentPool = await this.poolService.getOrCreatePool(session.agent.id);
+        
+        // Log detalhado do estado do pool
+        const poolState = poolLimits.poolBalance <= 0 ? '🔴 ZERADO' :
+                          poolLimits.maxMultiplier < 3 ? '🟠 MUITO BAIXO' :
+                          poolLimits.maxMultiplier < 10 ? '🟡 BAIXO' : '🟢 OK';
+        
+        this.logger.log(`[POOL] ${poolState} | Saldo: R$${poolLimits.poolBalance.toFixed(2)} | Fase: ${poolLimits.currentPhase} | WinChance: ${poolLimits.effectiveWinChance.toFixed(1)}% | MaxMulti: ${poolLimits.maxMultiplier}x`);
+        
+        // NOTA: Não bloqueamos mais o spin! O pool.service agora ajusta winChance automaticamente.
+        // Pool zerado = winChance 0% = jogador sempre perde (mas joga normalmente)
+      } catch (error) {
+        this.logger.warn(`[POOL] Erro ao verificar pool: ${error.message}. Continuando sem limite.`);
+      }
+    }
+
+    // 4. Executa Lógica do Jogo COM configurações do agente E limite do pool
     const spinResult = this.slotEngine.spinPredefined(config, betAmount, cpl, {
       rtp: agentConfig.rtp,
-      winChance: agentConfig.winChance,
+      // Usa WinChance do pool se disponível (já considera a fase)
+      winChance: poolLimits?.effectiveWinChance ?? agentConfig.winChance,
+      maxPayout: poolLimits?.maxMultiplier, // Limita multiplicadores pelo pool (undefined = sem limite)
+      phase: poolLimits?.currentPhase as 'retention' | 'normal' | 'release', // Fase do pool para tabela de pesos
     });
 
     // 4.5 APLICA CONFIGURAÇÕES DE PROMOÇÃO (se ativas)
@@ -653,6 +816,31 @@ export class GamesController {
 
     this.logger.log(`[SPIN] Round: ${round.roundId}, Bet: ${totalBet}, Win: ${spinResult.totalWin}, Balance: ${currentBalance}, Mode: ${useRemoteWebhooks ? 'REMOTE' : 'LOCAL'}`);
 
+    // 7.5 POOL: Registra o spin no pool do agente (bet e payout)
+    if (agentPool && session.agent?.id) {
+      try {
+        // Calcula o multiplicador real do prêmio
+        const payoutMultiplier = spinResult.totalWin > 0 ? spinResult.totalWin / totalBet : 0;
+        
+        await this.poolService.processSpin(
+          session.agent.id,      // agentId (string)
+          totalBet,              // betAmount
+          spinResult.totalWin,   // payoutAmount (estava passando cpl errado!)
+          payoutMultiplier,      // multiplier (estava passando totalWin errado!)
+          {
+            sessionId: session.id,
+            roundId: round.id,
+            gameCode: session.gameCode,
+            playerId: session.playerId,
+          }
+        );
+        this.logger.log(`[POOL] Spin processado: Bet=${totalBet}, Payout=${spinResult.totalWin}, Mult=${payoutMultiplier.toFixed(2)}x, Net=${totalBet - spinResult.totalWin}`);
+      } catch (error) {
+        // Não bloqueia o retorno mesmo se pool falhar
+        this.logger.error(`[POOL] Erro ao processar spin no pool: ${error.message}`);
+      }
+    }
+
     // 8. Retorna resposta no formato que o NhutCorp_SlotGenPHP espera
     const activeLines = spinResult.winLines.map(line => ({
       index: line.index,
@@ -671,6 +859,39 @@ export class GamesController {
 
     const slotIconsFlat = spinResult.iconData.flat();
 
+    // ===== FEATURE ESPECIAL (Tigre da Sorte) =====
+    // Prepara dados da feature para o frontend
+    let featureData = null;
+    let dropLineData: any[] = [];
+    let featureSymbol = '';
+    let multiply = spinResult.multiply || 0;
+
+    if (spinResult.featureTriggered && spinResult.featureResult) {
+      const fr = spinResult.featureResult;
+      featureSymbol = fr.featureSymbol;
+      multiply = fr.finalMultiplier;
+      
+      // Monta DropLineData com histórico de respins
+      dropLineData = fr.respinHistory.map((respin, idx) => ({
+        round: respin.respinNumber,
+        icons: respin.icons,
+        new_symbols: respin.newSymbolsCount,
+        locked: respin.lockedPositions,
+      }));
+
+      featureData = {
+        access_feature: true,
+        feature_symbol: fr.featureSymbol,
+        feature_symbol_id: fr.featureSymbolId,
+        total_respins: fr.totalRespins,
+        is_full_grid: fr.isFullGrid,
+        final_multiplier: fr.finalMultiplier,
+        locked_positions: fr.lockedPositions,
+      };
+
+      this.logger.log(`[FEATURE] 🐯 Enviando feature para frontend: ${fr.totalRespins} respins, ${fr.lockedPositions.length} símbolos, mult=${fr.finalMultiplier}x`);
+    }
+
     const data = {
       credit: currentBalance,
       free_num: 0,
@@ -679,25 +900,31 @@ export class GamesController {
       free_spin: 0,
       jackpot: 0,
       scaler: 0,
-      feature_symbol: '',
+      feature_symbol: featureSymbol,
+      multiply: multiply,
       pull: {
         SlotIcons: slotIconsFlat,
         WinAmount: spinResult.totalWin,
         WinOnDrop: 0,
-        ActiveIcons: activeIcons,
+        ActiveIcons: spinResult.featureTriggered && spinResult.featureResult
+          ? spinResult.featureResult.lockedPositions
+          : activeIcons,
         ActiveLines: activeLines,
         TotalWay: spinResult.totalWin > 0 ? spinResult.winLines.length : 0,
         WildColumIcon: '',
-        DropLine: 0,
-        DropLineData: [],
-        FeatureResult: null
+        DropLine: dropLineData.length,
+        DropLineData: dropLineData,
+        FeatureResult: featureData,
+        Multiply: multiply,
       }
     };
 
     return res.status(200).json({
       success: true,
       data: data,
-      message: spinResult.totalWin > 0 ? 'You won!' : 'Try again'
+      message: spinResult.featureTriggered 
+        ? `🐯 Tigre da Sorte! ${spinResult.featureResult?.isFullGrid ? 'GRID CHEIO x10!' : `${spinResult.featureResult?.lockedPositions.length} símbolos!`}`
+        : (spinResult.totalWin > 0 ? 'You won!' : 'Try again')
     });
   }
 
