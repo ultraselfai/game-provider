@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🎰 Teste do Pool - Sistema Completo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1800px; margin: 0 auto; }
+        h1 { text-align: center; color: #f39c12; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 30px; font-size: 14px; }
+        
+        .top-bar {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .top-bar .field { display: flex; flex-direction: column; gap: 5px; }
+        .top-bar label { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .top-bar select, .top-bar input {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #2a2a4a;
+            color: #fff;
+            font-size: 14px;
+            min-width: 180px;
+        }
+        .top-bar select:focus, .top-bar input:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+        
+        .grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; }
+        
+        .panel {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel h2 { 
+            color: #f39c12; 
+            margin-top: 0; 
+            padding-bottom: 10px; 
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            font-size: 16px;
+        }
+        
+        .phase-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        .phase-btn:hover { transform: scale(1.02); }
+        .phase-btn.retention { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .phase-btn.normal { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+        .phase-btn.release { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+        .phase-btn.active { box-shadow: 0 0 20px currentColor; transform: scale(1.05); }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .stat-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #3498db; }
+        .stat-label { font-size: 11px; color: #aaa; margin-top: 3px; }
+        
+        .game-container { position: relative; }
+        .game-iframe {
+            width: 100%;
+            height: 650px;
+            border: 3px solid #f39c12;
+            border-radius: 15px;
+            background: #000;
+        }
+        
+        .controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        
+        .log-box {
+            background: #000;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .log-entry { padding: 4px 0; border-bottom: 1px solid #333; }
+        .log-entry.win { color: #2ecc71; }
+        .log-entry.loss { color: #e74c3c; }
+        .log-entry.info { color: #3498db; }
+        .log-entry.warning { color: #f39c12; }
+        
+        .current-phase {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .current-phase.retention { background: rgba(231, 76, 60, 0.3); border: 2px solid #e74c3c; }
+        .current-phase.normal { background: rgba(243, 156, 18, 0.3); border: 2px solid #f39c12; }
+        .current-phase.release { background: rgba(46, 204, 113, 0.3); border: 2px solid #2ecc71; }
+        
+        .balance-display {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .balance-value { font-size: 28px; font-weight: bold; color: #2ecc71; }
+        .balance-label { color: #aaa; font-size: 12px; }
+        .balance-zero { color: #e74c3c !important; }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 650px;
+            font-size: 20px;
+            color: #aaa;
+        }
+        
+        .token-display {
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        .token-display label { color: #888; display: block; margin-bottom: 5px; }
+        .token-display code { color: #f39c12; }
+        
+        .agent-info {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        .agent-info h3 { margin: 0 0 10px 0; color: #f39c12; font-size: 14px; }
+        .agent-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .agent-info-item { text-align: center; }
+        .agent-info-item label { font-size: 10px; color: #888; display: block; }
+        .agent-info-item value { font-size: 16px; font-weight: bold; }
+        .agent-info-item value.rtp { color: #2ecc71; }
+        .agent-info-item value.winchance { color: #3498db; }
+        .agent-info-item value.credits { color: #f39c12; }
+        
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .quick-actions .btn { flex: 1; padding: 8px; font-size: 12px; }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        .alert-warning {
+            background: rgba(243, 156, 18, 0.2);
+            border: 1px solid #f39c12;
+            color: #f39c12;
+        }
+        .alert-danger {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+        .alert-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+        
+        .deposit-section {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .deposit-section h4 { margin: 0 0 10px 0; font-size: 13px; color: #aaa; }
+        .deposit-section input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #2a2a4a;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 Teste Completo do Sistema de Pool</h1>
+        <p class="subtitle">Simule o cenário real: escolha um agente, configure o pool e teste o comportamento do jogo</p>
+        
+        <!-- Barra Superior - Seleção de Agente e Jogo -->
+        <div class="top-bar">
+            <div class="field">
+                <label>🤖 Agente</label>
+                <select id="agentSelect" onchange="onAgentChange()">
+                    <option value="">-- Selecione um Agente --</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>🎮 Jogo</label>
+                <select id="gameSelect">
+                    <option value="fortunetiger">🐯 Fortune Tiger</option>
+                    <option value="fortuneox">🐂 Fortune Ox</option>
+                    <option value="fortunerabbit">🐰 Fortune Rabbit</option>
+                    <option value="fortunemouse">🐭 Fortune Mouse</option>
+                    <option value="fortunepanda">🐼 Fortune Panda</option>
+                    <option value="bikiniparadise">👙 Bikini Paradise</option>
+                    <option value="hoodvswoolf">🐺 Hood vs Woolf</option>
+                    <option value="jackfrost">❄️ Jack Frost</option>
+                    <option value="phoenixrises">🔥 Phoenix Rises</option>
+                    <option value="queenofbounty">👑 Queen of Bounty</option>
+                    <option value="songkranparty">💦 Songkran Party</option>
+                    <option value="treasuresofaztec">🏺 Treasures of Aztec</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>👤 Player ID</label>
+                <input type="text" id="playerId" value="tester-001" style="width: 120px;">
+            </div>
+            <button class="btn btn-primary" onclick="startGame()">🚀 Iniciar Jogo</button>
+            <button class="btn btn-warning" onclick="refreshAll()">🔄 Atualizar Tudo</button>
+            <button class="btn btn-success" onclick="openAdminPanel()">⚙️ Admin</button>
+            <button class="btn btn-success" onclick="openAgentPanel()">👤 Painel Agente</button>
+        </div>
+        
+        <div class="grid">
+            <!-- Painel de Controle -->
+            <div>
+                <!-- Info do Agente Selecionado -->
+                <div id="agentInfoPanel" class="agent-info" style="display: none;">
+                    <h3>📊 Agente Selecionado</h3>
+                    <div class="agent-info-grid">
+                        <div class="agent-info-item">
+                            <label>Nome</label>
+                            <value id="agentName">-</value>
+                        </div>
+                        <div class="agent-info-item">
+                            <label>RTP</label>
+                            <value class="rtp" id="agentRtp">-</value>
+                        </div>
+                        <div class="agent-info-item">
+                            <label>Win Chance</label>
+                            <value class="winchance" id="agentWinChance">-</value>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pool do Agente -->
+                <div class="panel">
+                    <h2>🏦 Pool do Agente</h2>
+                    
+                    <div id="poolAlert" class="alert alert-warning" style="display: none;"></div>
+                    
+                    <div class="balance-display">
+                        <div class="balance-label">Saldo do Pool</div>
+                        <div class="balance-value" id="poolBalance">R$ 0,00</div>
+                    </div>
+                    
+                    <div id="currentPhase" class="current-phase normal">
+                        ⚖️ Fase Normal
+                    </div>
+                    
+                    <div style="font-size: 12px; color: #888; margin-bottom: 10px;">
+                        <strong>Estado Atual:</strong>
+                        <span id="poolStateDesc">Selecione um agente para ver o estado</span>
+                    </div>
+                    
+                    <p style="color: #aaa; font-size: 12px; margin-bottom: 10px;">
+                        Clique para forçar uma fase:
+                    </p>
+                    
+                    <button class="phase-btn retention" onclick="setPhase('retention')">
+                        🔒 RETENÇÃO - Win: <span id="retentionWinChance">10</span>% | Max: <span id="retentionMaxMult">30</span>x
+                    </button>
+                    
+                    <button class="phase-btn normal" onclick="setPhase('normal')">
+                        ⚖️ NORMAL - Win: <span id="normalWinChance">35</span>% | Max: <span id="normalMaxMult">100</span>x
+                    </button>
+                    
+                    <button class="phase-btn release" onclick="setPhase('release')">
+                        💰 LIBERAÇÃO - Win: <span id="releaseWinChance">65</span>% | Max: <span id="releaseMaxMult">250</span>x
+                    </button>
+                    
+                    <!-- Seção de Depósito Rápido -->
+                    <div class="deposit-section">
+                        <h4>💵 Depósito Rápido no Pool</h4>
+                        <input type="number" id="depositAmount" placeholder="Valor (ex: 100)" min="0" step="10">
+                        <div class="quick-actions">
+                            <button class="btn btn-success" onclick="quickDeposit(100)">+R$100</button>
+                            <button class="btn btn-success" onclick="quickDeposit(500)">+R$500</button>
+                            <button class="btn btn-success" onclick="quickDeposit(1000)">+R$1000</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="customDeposit()" style="width: 100%; margin-top: 8px;">
+                            Depositar Valor Personalizado
+                        </button>
+                        <button class="btn btn-danger" onclick="resetPool()" style="width: 100%; margin-top: 8px;">
+                            🗑️ Zerar Pool (Teste do Ponto Zero)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Estatísticas -->
+                <div class="panel" style="margin-top: 15px;">
+                    <h2>📊 Estatísticas da Sessão</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalSpins">0</div>
+                            <div class="stat-label">Total Spins</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalWins">0</div>
+                            <div class="stat-label">Vitórias</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="winRate">0%</div>
+                            <div class="stat-label">Taxa Vitória</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="biggestWin">0x</div>
+                            <div class="stat-label">Maior Mult.</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalBet">R$ 0</div>
+                            <div class="stat-label">Total Apostado</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalWon">R$ 0</div>
+                            <div class="stat-label">Total Ganho</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="netResult">R$ 0</div>
+                            <div class="stat-label">Resultado</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="rtpReal">0%</div>
+                            <div class="stat-label">RTP Real</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-warning" onclick="resetStats()" style="width: 100%; margin-top: 12px;">
+                        🔄 Resetar Estatísticas
+                    </button>
+                </div>
+                
+                <!-- Log -->
+                <div class="panel" style="margin-top: 15px;">
+                    <h2>📋 Log de Eventos</h2>
+                    <div id="logBox" class="log-box">
+                        <div class="log-entry info">Selecione um agente para começar...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Área do Jogo -->
+            <div class="game-container">
+                <div class="panel">
+                    <h2>🎮 Área do Jogo</h2>
+                    
+                    <div class="token-display" id="tokenDisplay" style="display: none;">
+                        <label>🔑 Token da Sessão:</label>
+                        <code id="sessionToken">-</code>
+                    </div>
+                    
+                    <div id="gameArea" style="margin-top: 15px;">
+                        <div class="loading">
+                            <div style="text-align: center;">
+                                <div style="font-size: 48px; margin-bottom: 20px;">🎰</div>
+                                <div>Selecione um agente e clique em "Iniciar Jogo"</div>
+                                <div style="font-size: 14px; color: #888; margin-top: 10px;">
+                                    O jogo será carregado com as configurações do pool
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="btn btn-success" onclick="openInNewTab()">↗️ Abrir em Nova Aba</button>
+                        <button class="btn btn-primary" onclick="reloadGame()">🔄 Recarregar Jogo</button>
+                        <button class="btn btn-warning" onclick="generateNewToken()">🎫 Novo Token</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURAÇÃO
+        // ==========================================
+        const API_BASE = '/api/v1';
+        const VGAMES_BASE = '/api/vgames';
+        
+        let currentAgentId = null;
+        let currentToken = null;
+        let currentGameUrl = null;
+        let agents = [];
+        let currentPhase = 'normal';
+        let poolBalance = 0;
+        
+        let stats = {
+            totalSpins: 0,
+            wins: 0,
+            biggestMultiplier: 0,
+            totalBet: 0,
+            totalWon: 0
+        };
+        
+        let baselineStats = null;
+        let sessionStartTime = null;
+        let pollingInterval = null;
+        
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+        window.onload = function() {
+            loadAgents();
+            addLog('Página carregada. Selecione um agente para começar.', 'info');
+        };
+        
+        // Carregar lista de agentes
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${VGAMES_BASE}/test/agents`);
+                const data = await response.json();
+                
+                if (data.success && data.agents) {
+                    agents = data.agents;
+                    const select = document.getElementById('agentSelect');
+                    
+                    data.agents.forEach(agent => {
+                        const option = document.createElement('option');
+                        option.value = agent.id;
+                        option.textContent = `${agent.name} (${agent.credits} créditos)`;
+                        select.appendChild(option);
+                    });
+                    
+                    // Restaura último agente
+                    const lastAgent = localStorage.getItem('testPool_lastAgent');
+                    if (lastAgent) {
+                        select.value = lastAgent;
+                        onAgentChange();
+                    }
+                    
+                    addLog(`✅ ${data.agents.length} agentes carregados`, 'info');
+                }
+            } catch (error) {
+                addLog('❌ Erro ao carregar agentes: ' + error.message, 'loss');
+            }
+        }
+        
+        // Quando agente muda
+        async function onAgentChange() {
+            const agentId = document.getElementById('agentSelect').value;
+            const infoPanel = document.getElementById('agentInfoPanel');
+            
+            if (!agentId) {
+                infoPanel.style.display = 'none';
+                currentAgentId = null;
+                return;
+            }
+            
+            currentAgentId = agentId;
+            localStorage.setItem('testPool_lastAgent', agentId);
+            
+            const agent = agents.find(a => a.id === agentId);
+            if (agent) {
+                document.getElementById('agentName').textContent = agent.name;
+                infoPanel.style.display = 'block';
+                addLog(`🤖 Agente selecionado: ${agent.name}`, 'info');
+            }
+            
+            // Carrega dados do pool deste agente
+            await refreshPool();
+            
+            // Reseta baseline de stats
+            baselineStats = null;
+        }
+        
+        // ==========================================
+        // POOL
+        // ==========================================
+        async function refreshPool() {
+            if (!currentAgentId) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/pool/${currentAgentId}`);
+                const data = await res.json();
+                
+                if (data.data || data.balance !== undefined) {
+                    const pool = data.data || data;
+                    poolBalance = parseFloat(pool.balance) || 0;
+                    
+                    // Atualiza saldo
+                    const balanceEl = document.getElementById('poolBalance');
+                    balanceEl.textContent = formatCurrency(poolBalance);
+                    balanceEl.classList.toggle('balance-zero', poolBalance <= 0);
+                    
+                    // Atualiza fase
+                    currentPhase = pool.currentPhase || 'normal';
+                    updatePhaseDisplay();
+                    
+                    // Atualiza configurações das fases
+                    if (pool.phases) {
+                        document.getElementById('retentionWinChance').textContent = parseFloat(pool.phases.retention?.winChance || 10).toFixed(0);
+                        document.getElementById('retentionMaxMult').textContent = pool.phases.retention?.maxMultiplier || 30;
+                        document.getElementById('normalWinChance').textContent = parseFloat(pool.phases.normal?.winChance || 35).toFixed(0);
+                        document.getElementById('normalMaxMult').textContent = pool.phases.normal?.maxMultiplier || 100;
+                        document.getElementById('releaseWinChance').textContent = parseFloat(pool.phases.release?.winChance || 65).toFixed(0);
+                        document.getElementById('releaseMaxMult').textContent = pool.phases.release?.maxMultiplier || 250;
+                    }
+                    
+                    // Mostra alerta baseado no estado
+                    updatePoolAlert();
+                }
+                
+                // Busca estatísticas
+                await refreshStatsFromPool();
+                
+            } catch (err) {
+                console.error('Erro ao buscar pool:', err);
+            }
+        }
+        
+        function updatePoolAlert() {
+            const alert = document.getElementById('poolAlert');
+            const stateDesc = document.getElementById('poolStateDesc');
+            
+            if (poolBalance <= 0) {
+                alert.style.display = 'block';
+                alert.className = 'alert alert-danger';
+                alert.innerHTML = '🔴 <strong>POOL ZERADO!</strong> Jogadores vão perder 100% dos spins. Ideal para teste do "ponto zero".';
+                stateDesc.textContent = 'Pool zerado - WinChance efetivo: 0%';
+            } else if (poolBalance < 20) {
+                alert.style.display = 'block';
+                alert.className = 'alert alert-warning';
+                alert.innerHTML = '🟠 <strong>Pool muito baixo!</strong> WinChance reduzida drasticamente (~2%). Pagamentos mínimos apenas.';
+                stateDesc.textContent = 'Pool muito baixo - WinChance efetivo: ~2%';
+            } else if (poolBalance < 100) {
+                alert.style.display = 'block';
+                alert.className = 'alert alert-warning';
+                alert.innerHTML = '🟡 <strong>Pool baixo.</strong> WinChance reduzida proporcionalmente. Apenas prêmios pequenos.';
+                const maxMult = Math.floor((poolBalance * 0.3) / 2); // Assume bet de 2
+                stateDesc.textContent = `Pool baixo - MaxMultiplier: ${maxMult}x`;
+            } else {
+                alert.style.display = 'none';
+                stateDesc.textContent = `Pool saudável - Fase ${currentPhase} operando normalmente`;
+            }
+        }
+        
+        function updatePhaseDisplay() {
+            const phaseEl = document.getElementById('currentPhase');
+            phaseEl.className = 'current-phase ' + currentPhase;
+            
+            const labels = {
+                retention: '🔒 Fase Retenção',
+                normal: '⚖️ Fase Normal',
+                release: '💰 Fase Liberação'
+            };
+            phaseEl.textContent = labels[currentPhase] || currentPhase;
+            
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(currentPhase)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        async function setPhase(phase) {
+            if (!currentAgentId) {
+                alert('Selecione um agente primeiro!');
+                return;
+            }
+            
+            try {
+                addLog(`Alterando fase para: ${phase.toUpperCase()}...`, 'info');
+                
+                const res = await fetch(`${API_BASE}/pool/${currentAgentId}/phase`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phase })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentPhase = phase;
+                    updatePhaseDisplay();
+                    addLog(`✅ Fase alterada para: ${phase.toUpperCase()}`, 'info');
+                    refreshPool();
+                } else {
+                    addLog(`❌ Erro: ${data.message}`, 'loss');
+                }
+            } catch (err) {
+                addLog('❌ Erro de conexão', 'loss');
+            }
+        }
+        
+        async function quickDeposit(amount) {
+            if (!currentAgentId) {
+                alert('Selecione um agente primeiro!');
+                return;
+            }
+            
+            try {
+                addLog(`Depositando R$${amount}...`, 'info');
+                
+                const res = await fetch(`${API_BASE}/pool/${currentAgentId}/deposit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, note: 'Depósito de teste' })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    addLog(`✅ Depósito de R$${amount} realizado!`, 'win');
+                    refreshPool();
+                } else {
+                    addLog(`❌ Erro: ${data.message}`, 'loss');
+                }
+            } catch (err) {
+                addLog('❌ Erro de conexão', 'loss');
+            }
+        }
+        
+        async function customDeposit() {
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            if (!amount || amount <= 0) {
+                alert('Digite um valor válido!');
+                return;
+            }
+            await quickDeposit(amount);
+            document.getElementById('depositAmount').value = '';
+        }
+        
+        async function resetPool() {
+            if (!currentAgentId) {
+                alert('Selecione um agente primeiro!');
+                return;
+            }
+            
+            if (!confirm('⚠️ Tem certeza que deseja ZERAR o pool?\n\nIsso irá retirar todo o saldo e simular o cenário de "ponto zero" onde a bet acabou de abrir.')) {
+                return;
+            }
+            
+            try {
+                // Primeiro, pega o saldo atual
+                const res = await fetch(`${API_BASE}/pool/${currentAgentId}`);
+                const data = await res.json();
+                const currentBalance = parseFloat(data.data?.balance || 0);
+                
+                if (currentBalance > 0) {
+                    // Faz um saque de todo o saldo
+                    const withdrawRes = await fetch(`${API_BASE}/pool/${currentAgentId}/withdraw`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: currentBalance, note: 'Reset para teste do ponto zero' })
+                    });
+                    const withdrawData = await withdrawRes.json();
+                    
+                    if (withdrawData.success) {
+                        addLog(`🗑️ Pool zerado! Retirado R$${currentBalance.toFixed(2)}`, 'warning');
+                        addLog('💡 Agora o sistema está no "ponto zero" - jogadores perderão 100% dos spins', 'info');
+                        refreshPool();
+                    } else {
+                        addLog(`❌ Erro: ${withdrawData.message}`, 'loss');
+                    }
+                } else {
+                    addLog('Pool já está zerado!', 'info');
+                }
+            } catch (err) {
+                addLog('❌ Erro de conexão', 'loss');
+            }
+        }
+        
+        // ==========================================
+        // ESTATÍSTICAS
+        // ==========================================
+        async function refreshStatsFromPool() {
+            if (!currentAgentId) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/pool/${currentAgentId}/stats?period=1h`);
+                const data = await res.json();
+                
+                if (data.success && data.data) {
+                    const poolStats = data.data;
+                    
+                    if (!baselineStats) {
+                        baselineStats = {
+                            totalBets: poolStats.bets?.total || 0,
+                            totalPayouts: poolStats.payouts?.total || 0,
+                            totalSpins: poolStats.bets?.count || 0,
+                            wins: poolStats.payouts?.count || 0
+                        };
+                        sessionStartTime = new Date();
+                    }
+                    
+                    const sessionBets = (poolStats.bets?.total || 0) - baselineStats.totalBets;
+                    const sessionPayouts = (poolStats.payouts?.total || 0) - baselineStats.totalPayouts;
+                    const sessionSpins = (poolStats.bets?.count || 0) - baselineStats.totalSpins;
+                    const sessionWins = (poolStats.payouts?.count || 0) - baselineStats.wins;
+                    
+                    // Detecta novo spin
+                    if (sessionSpins > stats.totalSpins) {
+                        const newSpins = sessionSpins - stats.totalSpins;
+                        const wasWin = sessionWins > stats.wins;
+                        
+                        if (wasWin) {
+                            addLog(`🎰 SPIN: 🎉 VITÓRIA!`, 'win');
+                        } else {
+                            addLog(`🎰 SPIN: ❌ Sem ganho`, 'loss');
+                        }
+                    }
+                    
+                    stats.totalSpins = sessionSpins;
+                    stats.wins = sessionWins;
+                    stats.totalBet = sessionBets;
+                    stats.totalWon = sessionPayouts;
+                    
+                    if (poolStats.biggestPayout) {
+                        const mult = Math.round(poolStats.biggestPayout / 2);
+                        if (mult > stats.biggestMultiplier) {
+                            stats.biggestMultiplier = mult;
+                        }
+                    }
+                    
+                    updateStatsDisplay();
+                }
+            } catch (err) {
+                console.error('Erro ao buscar stats:', err);
+            }
+        }
+        
+        function updateStatsDisplay() {
+            document.getElementById('totalSpins').textContent = stats.totalSpins;
+            document.getElementById('totalWins').textContent = stats.wins;
+            document.getElementById('winRate').textContent = 
+                stats.totalSpins > 0 ? Math.round((stats.wins / stats.totalSpins) * 100) + '%' : '0%';
+            document.getElementById('biggestWin').textContent = stats.biggestMultiplier + 'x';
+            
+            document.getElementById('totalBet').textContent = formatCurrency(stats.totalBet);
+            document.getElementById('totalWon').textContent = formatCurrency(stats.totalWon);
+            
+            const netResult = stats.totalWon - stats.totalBet;
+            const netEl = document.getElementById('netResult');
+            netEl.textContent = formatCurrency(netResult);
+            netEl.style.color = netResult >= 0 ? '#2ecc71' : '#e74c3c';
+            
+            const rtpReal = stats.totalBet > 0 ? ((stats.totalWon / stats.totalBet) * 100).toFixed(1) : 0;
+            document.getElementById('rtpReal').textContent = rtpReal + '%';
+        }
+        
+        function resetStats() {
+            baselineStats = null;
+            stats = { totalSpins: 0, wins: 0, biggestMultiplier: 0, totalBet: 0, totalWon: 0 };
+            updateStatsDisplay();
+            addLog('📊 Estatísticas resetadas', 'info');
+            refreshPool();
+        }
+        
+        // ==========================================
+        // JOGO
+        // ==========================================
+        async function startGame() {
+            if (!currentAgentId) {
+                alert('Selecione um agente primeiro!');
+                return;
+            }
+            
+            const game = document.getElementById('gameSelect').value;
+            const playerId = document.getElementById('playerId').value || 'tester-' + Date.now();
+            
+            addLog(`Iniciando ${game}...`, 'info');
+            
+            try {
+                const response = await fetch(`${VGAMES_BASE}/test/generate-token/${playerId}/${game}/${currentAgentId}`);
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    currentToken = data.token;
+                    currentGameUrl = data.gameUrl;
+                    
+                    // Mostra token
+                    document.getElementById('tokenDisplay').style.display = 'block';
+                    document.getElementById('sessionToken').textContent = currentToken;
+                    
+                    // Atualiza info do agente
+                    if (data.agent) {
+                        document.getElementById('agentRtp').textContent = data.agent.rtp + '%';
+                        document.getElementById('agentWinChance').textContent = data.agent.winChance + '%';
+                    }
+                    
+                    // Carrega jogo
+                    document.getElementById('gameArea').innerHTML = 
+                        `<iframe class="game-iframe" src="${currentGameUrl}" id="gameIframe" allow="autoplay"></iframe>`;
+                    
+                    addLog(`✅ Jogo carregado! Token: ${currentToken.substring(0, 20)}...`, 'win');
+                    
+                    // Inicia polling
+                    startPolling();
+                } else {
+                    throw new Error(data.error || 'Falha ao gerar token');
+                }
+            } catch (error) {
+                addLog('❌ Erro: ' + error.message, 'loss');
+            }
+        }
+        
+        function reloadGame() {
+            if (currentGameUrl) {
+                document.getElementById('gameIframe').src = currentGameUrl;
+                addLog('🔄 Jogo recarregado', 'info');
+            }
+        }
+        
+        function generateNewToken() {
+            startGame();
+        }
+        
+        function openInNewTab() {
+            if (currentGameUrl) {
+                window.open(currentGameUrl, '_blank');
+            } else {
+                alert('Primeiro inicie o jogo!');
+            }
+        }
+        
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(() => {
+                refreshPool();
+            }, 2000);
+        }
+        
+        function refreshAll() {
+            refreshPool();
+            addLog('🔄 Dados atualizados', 'info');
+        }
+        
+        // ==========================================
+        // UTILITÁRIOS
+        // ==========================================
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+        
+        function addLog(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logBox.insertBefore(entry, logBox.firstChild);
+            
+            while (logBox.children.length > 50) {
+                logBox.removeChild(logBox.lastChild);
+            }
+        }
+        
+        function openAdminPanel() {
+            const isLocal = window.location.hostname === 'localhost';
+            window.open(isLocal ? 'http://localhost:3001' : 'https://console.ultraself.space', '_blank');
+        }
+        
+        function openAgentPanel() {
+            const isLocal = window.location.hostname === 'localhost';
+            window.open(isLocal ? 'http://localhost:3002' : 'https://app.ultraself.space', '_blank');
+        }
+        
+        // Polling inicial
+        setInterval(() => {
+            if (currentAgentId) refreshPool();
+        }, 10000);
+    </script>
+</body>
+</html>

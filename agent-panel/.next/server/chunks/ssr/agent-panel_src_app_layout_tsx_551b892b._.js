@@ -1,3 +1,0 @@
-module.exports=[50484,a=>{"use strict";var b=a.i(65656);function c({children:a}){return(0,b.jsx)("html",{lang:"pt-BR",children:(0,b.jsx)("body",{className:"bg-slate-900 text-white antialiased",children:a})})}a.s(["default",()=>c,"metadata",0,{title:"Painel do Agente - Game Provider",description:"Gerencie sua integração com o provedor de jogos"}])}];
-
-//# sourceMappingURL=agent-panel_src_app_layout_tsx_551b892b._.js.map

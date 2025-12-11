@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/dashboard/layout,_N_T_/dashboard/pool/layout,_N_T_/dashboard/pool/transactions/layout,_N_T_/dashboard/pool/transactions/page,_N_T_/dashboard/pool/transactions"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/dashboard/pool/transactions/__PAGE__",
+    "/dashboard/pool/transactions",
+    "/dashboard/pool",
+    "/dashboard",
+    "/_index",
+    "/_head"
+  ]
+}

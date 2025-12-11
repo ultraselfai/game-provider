@@ -1,13 +1,13 @@
 __turbopack_load_page_chunks__("/_error", [
-  "static/chunks/4638f_next_dist_compiled_55b6efa3._.js",
-  "static/chunks/4638f_next_dist_shared_lib_678c3387._.js",
-  "static/chunks/4638f_next_dist_client_278ae502._.js",
-  "static/chunks/4638f_next_dist_b4087f04._.js",
-  "static/chunks/4638f_next_error_3d761fef.js",
-  "static/chunks/[next]_entry_page-loader_ts_18916005._.js",
-  "static/chunks/4638f_react-dom_2f27fd7d._.js",
-  "static/chunks/4638f_d119d009._.js",
-  "static/chunks/[root-of-the-server]__a960ec0b._.js",
-  "static/chunks/game-provider_admin_pages__error_2da965e7._.js",
-  "static/chunks/turbopack-game-provider_admin_pages__error_468e7233._.js"
+  "static/chunks/node_modules_next_dist_compiled_9c6fb6f2._.js",
+  "static/chunks/node_modules_next_dist_shared_lib_6edb39eb._.js",
+  "static/chunks/node_modules_next_dist_client_d0aa886c._.js",
+  "static/chunks/node_modules_next_dist_f254759f._.js",
+  "static/chunks/node_modules_next_error_1cfbb379.js",
+  "static/chunks/[next]_entry_page-loader_ts_43b523b5._.js",
+  "static/chunks/node_modules_react-dom_4411d9bd._.js",
+  "static/chunks/node_modules_7f09fef0._.js",
+  "static/chunks/[root-of-the-server]__092393de._.js",
+  "static/chunks/pages__error_2da965e7._.js",
+  "static/chunks/turbopack-pages__error_bd4b61b3._.js"
 ])

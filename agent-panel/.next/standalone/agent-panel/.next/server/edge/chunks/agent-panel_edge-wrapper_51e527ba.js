@@ -1,0 +1,3 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["chunks/agent-panel_edge-wrapper_51e527ba.js",78786,(e,t,n)=>{self._ENTRIES||={};let h=Promise.resolve().then(()=>e.i(38652));h.catch(()=>{}),self._ENTRIES.middleware_middleware=new Proxy(h,{get(e,t){if("then"===t)return(t,n)=>e.then(t,n);let n=(...n)=>e.then(e=>(0,e[t])(...n));return n.then=(n,h)=>e.then(e=>e[t]).then(n,h),n}})}]);
+
+//# sourceMappingURL=agent-panel_edge-wrapper_51e527ba.js.map
