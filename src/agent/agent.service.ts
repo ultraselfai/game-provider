@@ -366,7 +366,7 @@ export class AgentService {
    */
   async listAgents(): Promise<Agent[]> {
     return this.agentRepo.find({
-      select: ['id', 'name', 'email', 'apiKey', 'isActive', 'spinCredits', 'totalCreditsPurchased', 'totalSpinsConsumed', 'totalDeposited', 'createdAt', 'lastLoginAt'],
+      select: ['id', 'name', 'email', 'apiKey', 'isActive', 'spinCredits', 'totalCreditsPurchased', 'totalSpinsConsumed', 'totalDeposited', 'createdAt', 'lastLoginAt', 'allowedGames', 'ggrRate'],
       order: { createdAt: 'DESC' },
     });
   }
