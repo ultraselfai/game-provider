@@ -367,16 +367,35 @@ export class SlotEngine {
 
   /**
    * Retorna configuração da feature especial para cada jogo
+   * 
+   * ⚠️ FEATURE DESABILITADA TEMPORARIAMENTE
+   * Motivo: Bug crítico - Feature ignora configurações do Pool de Liquidez
+   * Data: 12/12/2025
+   * Ver: DOSSIE-BUG-POOL.md para detalhes
+   * 
+   * TODO: Reabilitar após implementar integração com Pool
    */
   private getFeatureConfig(gameId: string): FeatureConfig {
-    // Configurações específicas por jogo
+    // 🚨 DESABILITADO: Feature ignora Pool de Liquidez e pode pagar prêmios ilimitados
+    // Retorna config desabilitada para TODOS os jogos até correção completa
+    this.logger.warn(`[FEATURE] Feature especial DESABILITADA para ${gameId} - Bug do Pool`);
+    
+    return {
+      enabled: false,
+      triggerChance: 0,
+      maxRespins: 0,
+      fullGridMultiplier: 1,
+      symbolAppearChance: 0,
+    };
+    
+    /* CONFIGURAÇÕES ORIGINAIS (comentadas para referência futura)
     const configs: Record<string, FeatureConfig> = {
       fortunetiger: {
         enabled: true,
-        triggerChance: 8,          // 8% de chance de ativar
-        maxRespins: 10,            // Máximo 10 respins
-        fullGridMultiplier: 10,    // x10 quando grid cheio
-        symbolAppearChance: 35,    // 35% de chance de símbolo aparecer em cada posição
+        triggerChance: 8,
+        maxRespins: 10,
+        fullGridMultiplier: 10,
+        symbolAppearChance: 35,
       },
       fortuneox: {
         enabled: true,
@@ -408,6 +427,7 @@ export class SlotEngine {
       fullGridMultiplier: 1,
       symbolAppearChance: 0,
     };
+    */
   }
 
   /**
