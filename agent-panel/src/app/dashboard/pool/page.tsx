@@ -76,6 +76,7 @@ export default function PoolPage() {
   const [limits, setLimits] = useState<PoolLimits | null>(null);
   const [stats, setStats] = useState<PoolStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'24h' | '7d' | '30d' | 'all'>('24h');
 
@@ -89,7 +90,9 @@ export default function PoolPage() {
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    setError('');
     try {
       const [poolRes, limitsRes, statsRes] = await Promise.all([
         fetchPool(),
@@ -111,6 +114,7 @@ export default function PoolPage() {
       console.error(err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [statsPeriod]);
 
@@ -249,9 +253,9 @@ export default function PoolPage() {
             Gerencie a banca e controle de pagamentos do seu cassino
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => loadData()}>
-          <RefreshCw className="size-4 mr-2" />
-          Atualizar
+        <Button variant="outline" size="sm" onClick={() => loadData(true)} disabled={refreshing}>
+          <RefreshCw className={`size-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Atualizando...' : 'Atualizar'}
         </Button>
       </div>
 
@@ -354,10 +358,11 @@ export default function PoolPage() {
             <Button 
               variant="outline" 
               className="w-full" 
-              onClick={() => loadData()}
+              onClick={() => loadData(true)}
+              disabled={refreshing}
             >
-              <RefreshCw className="size-4 mr-2" />
-              Atualizar Dados
+              <RefreshCw className={`size-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Atualizando...' : 'Atualizar Dados'}
             </Button>
             <Button variant="secondary" className="w-full" asChild>
               <Link href="/dashboard/pool/transactions">
